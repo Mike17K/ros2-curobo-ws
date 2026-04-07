@@ -1,0 +1,31 @@
+[project]
+name = "curobo-test"
+version = "0.1.0"
+description = "ROS 2 Workspace with cuRobo"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "torch",
+    "ninja",
+    "nvidia-curobo",
+    "numpy>=2.0.0",
+    "pytest",
+    "setuptools",
+    "wheel",
+]
+
+[tool.uv]
+# ΔΙΟΡΘΩΣΗ: Πρέπει να ορίσουμε ΠΟΙΟ πακέτο χρειάζεται το torch για να χτιστεί
+[tool.uv.extra-build-dependencies]
+nvidia-curobo = ["torch", "setuptools", "wheel", "numpy"]
+
+[tool.uv.sources]
+nvidia-curobo = { path = "./external/curobo", editable = true }
+
+[[tool.uv.index]]
+name = "pytorch"
+url = "https://download.pytorch.org/whl/cu121"
+explicit = true
+
+[tool.uv.sources.torch]
+index = "pytorch"
