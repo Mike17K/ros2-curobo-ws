@@ -1,12 +1,5 @@
 {
-    // --- Python Settings ---
-    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
-    "python.analysis.extraPaths": [
-        "/opt/ros/humble/lib/python3.10/site-packages",
-        "${workspaceFolder}/install/setup.bash"
-    ],
-    "python.terminal.activateEnvInSelectedTerminal": true,
-    // --- C++ Settings (IntelliSense) ---
+    // --- C++ Settings ---
     "C_Cpp.default.includePath": [
         "/opt/ros/humble/include/**",
         "${workspaceFolder}/install/**/include/**",
@@ -14,27 +7,32 @@
     ],
     "C_Cpp.default.cppStandard": "c++17",
     "C_Cpp.intelliSenseEngine": "default",
+    // Αυτό είναι πολύ σωστό, αρκεί να έχεις τρέξει το make build μια φορά
     "C_Cpp.default.compileCommands": "${workspaceFolder}/build/compile_commands.json",
     // --- ROS 2 Specific ---
     "ros.distro": "humble",
-    // --- File Exclusions (Για να είναι καθαρός ο explorer) ---
-    "files.exclude": {
-        "**/__pycache__": true,
-        "**/.pytest_cache": true,
-        "**/build": false, // Το αφήνουμε false για να βλέπουμε αν χτίζεται κάτι
-        "**/install": false,
-        "**/log": true
-    },
     // --- Editor Comfort ---
     "editor.formatOnSave": true,
-    "editor.bracketPairColorization.enabled": true,
-    "editor.guides.bracketPairs": "active",
-    // Συμβατότητα με το ruff (αν το χρησιμοποιείς μέσω uv)
+    // --- Python Settings ---
+    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+    "python.analysis.extraPaths": [
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages",
+        "${workspaceFolder}/install/local/lib/python3.10/dist-packages" // ΠΡΟΣΘΗΚΗ ΑΥΤΟΥ
+    ],
+    "python.analysis.typeCheckingMode": "basic", // ΕΝΕΡΓΟΠΟΙΗΣΗ ΓΙΑ SYNTAX ERRORS
     "[python]": {
-        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.defaultFormatter": "ms-python.python",
         "editor.codeActionsOnSave": {
-            "source.fixAll.ruff": "explicit",
-            "source.organizeImports.ruff": "explicit"
+            "source.organizeImports": "explicit"
         }
-    }
+    },
+    // Προσθήκη για να βλέπεις τα λάθη σε πραγματικό χρόνο
+    "python.analysis.diagnosticMode": "workspace",
+    "python.autoComplete.extraPaths": [
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ],
+    "cmake.sourceDirectory": "/workspace",
+    "ROS2.distro": "humble"
 }

@@ -5,10 +5,9 @@
         "ms-vscode.cpp-tools",
         "ms-python.python",
         "ms-python.debugpy",
-        "ms-python.black-formatter",
-        "charliermarsh.ruff",
         "twxs.cmake",
         "dbaeumer.vscode-eslint",
-        "spmeesseman.vscode-taskexplorer"
+        "spmeesseman.vscode-taskexplorer",
+        "esbenp.prettier-vscode"
     ]
 }

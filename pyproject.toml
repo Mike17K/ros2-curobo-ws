@@ -12,10 +12,12 @@ dependencies = [
     "pytest",
     "setuptools",
     "wheel",
+    "catkin-pkg>=1.1.0",
+    "empy==3.3.4",
+    "lark>=1.3.1",
 ]
 
 [tool.uv]
-# ΔΙΟΡΘΩΣΗ: Πρέπει να ορίσουμε ΠΟΙΟ πακέτο χρειάζεται το torch για να χτιστεί
 [tool.uv.extra-build-dependencies]
 nvidia-curobo = ["torch", "setuptools", "wheel", "numpy"]
 

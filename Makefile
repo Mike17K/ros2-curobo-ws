@@ -3,7 +3,8 @@ SHELL      := /bin/bash
 ROS_DISTRO := humble
 WS_ROOT    := $(shell pwd)
 # Χρησιμοποιούμε το uv run για να εκτελούμε εντολές εντός του venv αυτόματα
-RUN        := source /opt/ros/$(ROS_DISTRO)/setup.bash && uv run
+RUN        := cd $(WS_ROOT) && source /opt/ros/$(ROS_DISTRO)/setup.bash && source .venv/bin/activate && uv run
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/hpcx/ucx/lib:/opt/hpcx/ucc/lib
 
 # Colors
 G=\033[0;32m
@@ -23,18 +24,22 @@ activate:
 	@echo -e "$(C)Activating virtual environment...$(RESET)"
 	source .venv/bin/activate
 
-sync: activate
+sync:
 	@echo -e "$(C)Syncing dependencies with uv...$(RESET)"
-	nice -n 15 UV_CONCURRENT_BUILDS=1 MAX_JOBS=2 uv sync
+	UV_CONCURRENT_BUILDS=1 MAX_JOBS=2 nice -n 15 uv sync
 
 build:
 	@echo -e "$(G)Building all packages...$(RESET)"
-	$(RUN) colcon build --symlink-install --cmake-args $(CMAKE_DEFAULT_FLAGS) -DCMAKE_BUILD_TYPE=Release 
+	export LD_LIBRARY_PATH=$${LD_LIBRARY_PATH}:/opt/hpcx/ucx/lib:/opt/hpcx/ucc/lib && \
+	$(RUN) colcon build --symlink-install \
+	--parallel-workers 2 \
+	--base-paths src \
+	--cmake-args $(CMAKE_DEFAULT_FLAGS) -DCMAKE_BUILD_TYPE=Release
 
 # 2. Build Single Package (make builds n=όνομα)
 builds:
 	@if [ -z "$(n)" ]; then echo -e "$(R)Error: Provide name (n=name)$(RESET)"; exit 1; fi
-	$(RUN) colcon build --packages-select $(n) --symlink-install --cmake-args $(CMAKE_DEFAULT_FLAGS) -DCMAKE_BUILD_TYPE=Release
+	$(RUN) colcon build --packages-select $(n) --symlink-install --base-paths src --cmake-args $(CMAKE_DEFAULT_FLAGS) -DCMAKE_BUILD_TYPE=Release
 
 # 3. Δημιουργία Πακέτων
 create-cpp:
@@ -47,10 +52,10 @@ create-py:
 
 # 4. Debug & Deps
 debug:
-	$(RUN) colcon build --symlink-install --cmake-args $(CMAKE_DEFAULT_FLAGS) -DCMAKE_BUILD_TYPE=Debug
+	$(RUN) colcon build --symlink-install --base-paths src --cmake-args $(CMAKE_DEFAULT_FLAGS) -DCMAKE_BUILD_TYPE=Debug
 
 debugs:
-	$(RUN) colcon build --packages-select $(n) --symlink-install --cmake-args $(CMAKE_DEFAULT_FLAGS) -DCMAKE_BUILD_TYPE=Debug
+	$(RUN) colcon build --packages-select $(n) --symlink-install --base-paths src --cmake-args $(CMAKE_DEFAULT_FLAGS) -DCMAKE_BUILD_TYPE=Debug
 
 deps:
 	$(RUN) rosdep install -i --from-path src --rosdistro $(ROS_DISTRO) -y
@@ -73,6 +78,11 @@ add-dev:
 	@if [ -z "$(n)" ]; then echo -e "$(R)Error: Provide package name (n=package)$(RESET)"; exit 1; fi
 	uv add --dev $(n)
 
+# Χρήση: make run n=package_name e=executable_name
+run: builds
+	@if [ -z "$(e)" ]; then echo -e "$(R)Error: Provide executable name (e=exec)$(RESET)"; exit 1; fi
+	@echo -e "$(G)Running $(n)/$(e)...$(RESET)"
+	source install/setup.bash && ros2 run $(n) $(e)
 
 dev:
 	@chmod +x scripts/*.sh

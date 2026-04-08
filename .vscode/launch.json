@@ -1,35 +1,22 @@
 {
     "version": "0.2.0",
     "configurations": [
-        {
-            "name": "ROS 2: Debug Current Python File",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${file}",
-            "console": "integratedTerminal",
-            "justMyCode": false, // Απαραίτητο για να σταματάει σε breakpoints εκτός του τρέχοντος αρχείου
-            "env": {
-                "PYTHONPATH": "/opt/ros/humble/lib/python3.10/site-packages:/opt/ros/humble/local/lib/python3.10/dist-packages:${workspaceFolder}/install/lib/python3.10/site-packages:${workspaceFolder}/external/curobo/src:${env:PYTHONPATH}",
-                "LD_LIBRARY_PATH": "/opt/ros/humble/lib:${env:LD_LIBRARY_PATH}",
-                "CUROBO_PATH": "${workspaceFolder}/external/curobo"
-            }
-        },
-        {
-            "name": "C++: Attach to Node",
-            "type": "cppdbg",
-            "request": "attach",
-            "program": "${workspaceFolder}/install/my_cpp_package/lib/my_cpp_package/my_node_executable",
-            "processId": "${command:pickProcess}",
-            "MIMode": "gdb",
-            "miDebuggerPath": "/usr/bin/gdb",
-            "setupCommands": [
-                {
-                    "description": "Enable pretty-printing for gdb",
-                    "text": "-enable-pretty-printing",
-                    "ignoreFailures": true
-                }
-            ]
-        },
+        // {
+        //     "name": "C++: Attach to Node",
+        //     "type": "cppdbg",
+        //     "request": "attach",
+        //     "program": "${workspaceFolder}/install/my_cpp_package/lib/my_cpp_package/my_node_executable",
+        //     "processId": "${command:pickProcess}",
+        //     "MIMode": "gdb",
+        //     "miDebuggerPath": "/usr/bin/gdb",
+        //     "setupCommands": [
+        //         {
+        //             "description": "Enable pretty-printing for gdb",
+        //             "text": "-enable-pretty-printing",
+        //             "ignoreFailures": true
+        //         }
+        //     ]
+        // },
         {
             "name": "Python: Attach by Process ID",
             "type": "debugpy",
