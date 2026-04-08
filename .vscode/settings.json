@@ -22,7 +22,7 @@
     ],
     "python.analysis.typeCheckingMode": "basic", // ΕΝΕΡΓΟΠΟΙΗΣΗ ΓΙΑ SYNTAX ERRORS
     "[python]": {
-        "editor.defaultFormatter": "ms-python.python",
+        "editor.defaultFormatter": "ms-python.black-formatter",
         "editor.codeActionsOnSave": {
             "source.organizeImports": "explicit"
         }
@@ -34,5 +34,6 @@
         "/opt/ros/humble/local/lib/python3.10/dist-packages"
     ],
     "cmake.sourceDirectory": "/workspace",
-    "ROS2.distro": "humble"
+    "ROS2.distro": "humble",
+    "cmake.ignoreCMakeListsMissing": true
 }

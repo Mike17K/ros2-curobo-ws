@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'testpython1'
+package_name = 'shared_utils'
 
 setup(
     name=package_name,
@@ -20,12 +20,10 @@ setup(
     extras_require={
         'test': [
             'pytest',
-            'nvidia-curobo'
         ],
     },
     entry_points={
         'console_scripts': [
-            "talker = testpython1.talker:main",
         ],
     },
 )

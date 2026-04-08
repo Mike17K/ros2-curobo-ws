@@ -5,7 +5,6 @@
         "ms-vscode.cpp-tools",
         "ms-python.python",
         "ms-python.debugpy",
-        "twxs.cmake",
         "dbaeumer.vscode-eslint",
         "spmeesseman.vscode-taskexplorer",
         "esbenp.prettier-vscode"
