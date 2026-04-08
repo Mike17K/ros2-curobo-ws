@@ -14,21 +14,27 @@ RESET=\033[0m
 
 .PHONY: all build debug builds pkg clean deps create-cpp create-py dev sync
 
+CMAKE_DEFAULT_FLAGS = -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
 # 1. Build & Sync (Το sync ενημερώνει το venv βάσει του pyproject.toml)
 all: sync build
 
-sync:
+activate:
+	@echo -e "$(C)Activating virtual environment...$(RESET)"
+	source .venv/bin/activate
+
+sync: activate
 	@echo -e "$(C)Syncing dependencies with uv...$(RESET)"
-	uv sync
+	nice -n 15 UV_CONCURRENT_BUILDS=1 MAX_JOBS=2 uv sync
 
 build:
 	@echo -e "$(G)Building all packages...$(RESET)"
-	$(RUN) colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
+	$(RUN) colcon build --symlink-install --cmake-args $(CMAKE_DEFAULT_FLAGS) -DCMAKE_BUILD_TYPE=Release 
 
 # 2. Build Single Package (make builds n=όνομα)
 builds:
 	@if [ -z "$(n)" ]; then echo -e "$(R)Error: Provide name (n=name)$(RESET)"; exit 1; fi
-	$(RUN) colcon build --packages-select $(n) --symlink-install
+	$(RUN) colcon build --packages-select $(n) --symlink-install --cmake-args $(CMAKE_DEFAULT_FLAGS) -DCMAKE_BUILD_TYPE=Release
 
 # 3. Δημιουργία Πακέτων
 create-cpp:
@@ -41,10 +47,10 @@ create-py:
 
 # 4. Debug & Deps
 debug:
-	$(RUN) colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Debug
+	$(RUN) colcon build --symlink-install --cmake-args $(CMAKE_DEFAULT_FLAGS) -DCMAKE_BUILD_TYPE=Debug
 
 debugs:
-	$(RUN) colcon build --packages-select $(n) --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Debug
+	$(RUN) colcon build --packages-select $(n) --symlink-install --cmake-args $(CMAKE_DEFAULT_FLAGS) -DCMAKE_BUILD_TYPE=Debug
 
 deps:
 	$(RUN) rosdep install -i --from-path src --rosdistro $(ROS_DISTRO) -y

@@ -21,6 +21,8 @@ export PATH=$PATH:$HOME/.cargo/bin
 
 # Αυτή η εντολή λέει στο Git να εμπιστεύεται κάθε φάκελο
 git config --global --add safe.directory '*'
+git config core.fileMode false
+git config core.autocrlf input
 
 source ~/.bashrc
 uv venv --system-site-packages

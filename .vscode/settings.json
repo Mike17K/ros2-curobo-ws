@@ -2,13 +2,13 @@
     // --- Python Settings ---
     "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
     "python.analysis.extraPaths": [
-        "/opt/ros/jazzy/lib/python3.10/site-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
         "${workspaceFolder}/install/setup.bash"
     ],
     "python.terminal.activateEnvInSelectedTerminal": true,
     // --- C++ Settings (IntelliSense) ---
     "C_Cpp.default.includePath": [
-        "/opt/ros/jazzy/include/**",
+        "/opt/ros/humble/include/**",
         "${workspaceFolder}/install/**/include/**",
         "${workspaceFolder}/src/**"
     ],
@@ -16,7 +16,7 @@
     "C_Cpp.intelliSenseEngine": "default",
     "C_Cpp.default.compileCommands": "${workspaceFolder}/build/compile_commands.json",
     // --- ROS 2 Specific ---
-    "ros.distro": "jazzy",
+    "ros.distro": "humble",
     // --- File Exclusions (Για να είναι καθαρός ο explorer) ---
     "files.exclude": {
         "**/__pycache__": true,
@@ -31,7 +31,7 @@
     "editor.guides.bracketPairs": "active",
     // Συμβατότητα με το ruff (αν το χρησιμοποιείς μέσω uv)
     "[python]": {
-        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.defaultFormatter": "ms-python.black-formatter",
         "editor.codeActionsOnSave": {
             "source.fixAll.ruff": "explicit",
             "source.organizeImports.ruff": "explicit"
