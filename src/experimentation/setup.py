@@ -27,6 +27,10 @@ setup(
         "console_scripts": [
             "lqr_test = experimentation.lqr_test:main",
             "pole_placement_test = experimentation.pole_placement_test:main",
+            "kalman_filter_test = experimentation.kalman_filter_test:main",
+            "tvlqr_test = experimentation.tvlqr_test:main",
+            "ilqr_test = experimentation.ilqr_test:main",
+            "mpc_test = experimentation.mpc_test:main",
         ],
     },
 )
