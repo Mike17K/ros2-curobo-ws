@@ -18,8 +18,16 @@
     "python.analysis.extraPaths": [
         "/opt/ros/humble/lib/python3.10/site-packages",
         "/opt/ros/humble/local/lib/python3.10/dist-packages",
-        "${workspaceFolder}/install/local/lib/python3.10/dist-packages" // ΠΡΟΣΘΗΚΗ ΑΥΤΟΥ
+        "${workspaceFolder}/install/local/lib/python3.10/dist-packages",
+        "${workspaceFolder}/src",
+        "${workspaceFolder}/external"
     ],
+    "terminal.integrated.env.windows": {
+        "PYTHONPATH": "${workspaceFolder}/src;${workspaceFolder}/external;${env:PYTHONPATH}"
+    },
+    "terminal.integrated.env.linux": {
+        "PYTHONPATH": "${workspaceFolder}/src:${workspaceFolder}/external:${env:PYTHONPATH}"
+    },
     "python.analysis.typeCheckingMode": "basic", // ΕΝΕΡΓΟΠΟΙΗΣΗ ΓΙΑ SYNTAX ERRORS
     "[python]": {
         "editor.defaultFormatter": "ms-python.black-formatter",

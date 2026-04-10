@@ -17,6 +17,9 @@ git lfs install
 curl -LsSf https://astral.sh/uv/install.sh | sh
 echo 'export PATH=$PATH:$HOME/.cargo/bin' >> /root/.bashrc
 
+echo "alias s='source .venv/bin/activate && source install/setup.bash'" >> /root/.bashrc
+echo "alias b='source .venv/bin/activate && make && source install/setup.bash'" >> /root/.bashrc
+
 export PATH=$PATH:$HOME/.cargo/bin
 
 # Αυτή η εντολή λέει στο Git να εμπιστεύεται κάθε φάκελο

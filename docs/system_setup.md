@@ -1,62 +1,37 @@
-# Cuda drivers
-
+# Cuda drivers 
 ```bash
 nvidia-smi
 nvcc --version
 ```
-
 i have
 
 nvcc: NVIDIA (R) Cuda compiler driver
 Copyright (c) 2005-2023 NVIDIA Corporation
-Built on Fri_Jan\_\_6_16:45:21_PST_2023
+Built on Fri_Jan__6_16:45:21_PST_2023
 Cuda compilation tools, release 12.0, V12.0.140
 Build cuda_12.0.r12.0/compiler.32267302_0
 
-to install the drivers, follow the instructions here: https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#ubuntu-installation
 
-```
-# Driver
-sudo apt install nvidia-driver-535
-sudo reboot
-
-# CUDA repo
-wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
-sudo dpkg -i cuda-keyring_1.1-1_all.deb
-sudo apt update
-
-```
-
-<!-- # CUDA toolkit
-sudo apt install cuda-toolkit-12-0
-
-# Env
-echo 'export PATH=/usr/local/cuda-12.0/bin:$PATH' >> ~/.bashrc
-echo 'export LD_LIBRARY_PATH=/usr/local/cuda-12.0/lib64:$LD_LIBRARY_PATH' >> ~/.bashrc
-source ~/.bashrc -->
 
 # Setup nvidia container toolkit
 
 test
-
 ```
 docker run --rm --gpus all nvidia/cuda:12.1.1-base-ubuntu22.04 nvidia-smi
 ```
-
-if
+if 
 
 docker: Error response from daemon: failed to discover GPU vendor from CDI: no known GPU vendor found
 
 https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
 
 then
-
 ```bash
 sudo apt-get update && sudo apt-get install -y --no-install-recommends \
    ca-certificates \
    curl \
    gnupg2
-
+   
 curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
   && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
     sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
@@ -77,7 +52,6 @@ export NVIDIA_CONTAINER_TOOLKIT_VERSION=1.19.0-1
 ```
 
 # Configure Docker
-
 ```
 sudo nvidia-ctk runtime configure --runtime=docker
 sudo systemctl restart docker
@@ -86,7 +60,6 @@ sudo systemctl restart docker
 https://curobo.org/get_started/5_docker_development.html#docker-dev
 
 Edit/create the /etc/docker/daemon.json with content:
-
 ```
     {
     "runtimes": {
@@ -100,7 +73,6 @@ Edit/create the /etc/docker/daemon.json with content:
 ```
 
 # Setup Steps
-
 1. you need to make sure vsc plugins are installed, for debug, dev containers, and any other that is telling you the vsc that is needed
 2. your goal is to open the workspace in the container, with Cntrl + Shift + P -> Open in dev container -> you wait until it builds ( 1 hour maybe based of internet speed ) hit the popup to inspect logs and sys in ubuntu to inspect if the network is working or stuck
 3. run if didnt correctly run already the bash ./.devcontainer/setup.sh
