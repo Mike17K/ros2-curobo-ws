@@ -3,7 +3,7 @@ SHELL      := /bin/bash
 ROS_DISTRO := jazzy
 WS_ROOT    := $(shell pwd)
 # Χρησιμοποιούμε το uv run για να εκτελούμε εντολές εντός του venv αυτόματα
-RUN        := cd $(WS_ROOT) && source /opt/ros/$(ROS_DISTRO)/setup.bash && source .venv/bin/activate && uv run
+RUN        := cd $(WS_ROOT) && source /opt/ros/$(ROS_DISTRO)/setup.bash && uv run
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/hpcx/ucx/lib:/opt/hpcx/ucc/lib
 
 # Colors
@@ -18,23 +18,27 @@ RESET=\033[0m
 CMAKE_DEFAULT_FLAGS = -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
 # 1. Build & Sync (Το sync ενημερώνει το venv βάσει του pyproject.toml)
-all: sync build
+all: build
 
 activate:
 	@echo -e "$(C)Activating virtual environment...$(RESET)"
 	source .venv/bin/activate
 
-sync:
-	@echo -e "$(C)Syncing dependencies with uv...$(RESET)"
-	UV_CONCURRENT_BUILDS=1 MAX_JOBS=2 nice -n 15 uv sync
-
 build:
 	@echo -e "$(G)Building all packages...$(RESET)"
-	export LD_LIBRARY_PATH=$${LD_LIBRARY_PATH}:/opt/hpcx/ucx/lib:/opt/hpcx/ucc/lib && \
-	$(RUN) colcon build --symlink-install \
+	$(RUN) colcon build \
+	--symlink-install \
 	--parallel-workers 2 \
 	--base-paths src \
 	--cmake-args $(CMAKE_DEFAULT_FLAGS) -DCMAKE_BUILD_TYPE=Release
+
+build_vision:
+	source .venv_vision/bin/activate && $(RUN) colcon build \
+	--symlink-install \
+	--parallel-workers 2 \
+	--base-paths src/vision \
+	--cmake-args $(CMAKE_DEFAULT_FLAGS) -DCMAKE_BUILD_TYPE=Release
+
 
 # 2. Build Single Package (make builds n=όνομα)
 builds:

@@ -2,3 +2,11 @@
 	path = external/curobo
 	url = https://github.com/NVlabs/curobo.git
 	# ignore = dirty
+
+[submodule "src/vision/opencv_cam"]
+	path = src/vision/opencv_cam
+	url = https://github.com/clydemcqueen/opencv_cam.git
+
+[submodule "src/ros2_shared"]
+	path = src/ros2_shared
+	url = https://github.com/ptrmu/ros2_shared.git

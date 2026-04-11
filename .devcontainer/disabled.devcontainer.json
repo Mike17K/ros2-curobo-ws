@@ -18,7 +18,7 @@
         "ROS_DISTRO": "humble",
         "BASH_ENV": "/opt/ros/humble/setup.bash"
     },
-    "postCreateCommand": "bash /workspace/.devcontainer/setup.sh",
+    "postCreateCommand": "bash /workspace/scripts/setup_workspace.sh",
     "customizations": {
         "vscode": {
             "extensions": [

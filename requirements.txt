@@ -1,0 +1,16 @@
+torch
+ninja
+nvidia-curobo
+numpy>=2.0.0
+pytest
+setuptools
+wheel
+catkin-pkg>=1.1.0
+empy==3.3.4
+lark>=1.3.1
+matplotlib>=3.10.8
+scipy>=1.15.3
+gradio-imageslider>=0.0.20
+huggingface-hub>=1.10.1
+opencv-python>=4.13.0.92
+pyqt5>=5.15.11

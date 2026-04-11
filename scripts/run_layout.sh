@@ -30,9 +30,19 @@ broadcast_cmd() {
     xdotool key shift+ctrl+h
 }
 
+_default_venv_cmd() {
+    local python_path="$PYTHONPATH:$WS/external"
+    echo "source $WS/.venv/bin/activate && export PYTHONPATH=\$PYTHONPATH:$python_path"
+}
+
+_vision_venv_cmd() {
+    local python_path="$PYTHONPATH:$WS/.venv_vision/lib/python3.10/site-packages:$WS/external"
+    echo "source $WS/.venv_vision/bin/activate && export PYTHONPATH=\$PYTHONPATH:$python_path"
+}
+
 
 WS="/home/kaipis/Desktop/projects/robotics/curobo-test"
-GLOBAL_CMD="cd $WS && source /opt/ros/jazzy/setup.bash && source $WS/install/setup.bash && source $WS/.venv/bin/activate"
+GLOBAL_CMD="cd $WS && source /opt/ros/jazzy/setup.bash && source $WS/install/setup.bash && source $WS/.venv/bin/activate && export PYTHONPATH=\$PYTHONPATH:$WS/external"
 LAYOUT_NAME="CuroboTest"
 
 # Launch Terminator with your saved layout
@@ -68,4 +78,11 @@ sleep 0.5
 # Run ROS2 only in main pane
 paste_cmd "ros2 run opencv_cam opencv_cam_main" && xdotool key Return
 move_right
-paste_cmd "ros2 run rqt_image_view rqt_image_view" && xdotool key Return
+paste_cmd "ros2 run rqt_image_view rqt_image_view"
+
+move_down
+move_left
+paste_cmd  "$(_vision_venv_cmd)" && xdotool key Return
+sleep 0.5
+paste_cmd "python3 install/experimentation/lib/experimentation/depth_anything_v2_test"
+

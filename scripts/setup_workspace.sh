@@ -16,7 +16,8 @@ echo "Installing ROS 2 $ROS_DISTRO for Ubuntu $UBUNTU_CODENAME..."
 # 2. Εγκατάσταση ROS 2 (Με το νέο Keyring format για να μην βγάζει warnings)
 sudo apt update && sudo apt install -y curl gnupg lsb-release
 curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add -
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $UBUNTU_CODENAME main" > /etc/sudo apt/sources.list.d/ros2.list
+
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $UBUNTU_CODENAME main" | sudo tee /etc/apt/sources.list.d/ros2.list
 
 # 3. Εγκατάσταση Πακέτων (Χρησιμοποιώντας το $ROS_DISTRO)
 sudo apt update
@@ -59,9 +60,15 @@ git config core.autocrlf input
 
 # 7. Δημιουργία venv με system-site-packages
 # Το --system-site-packages επιτρέπει στο venv να βλέπει τις βιβλιοθήκες του ROS (όπως το cv_bridge)
-uv venv .venv --system-site-packages --python 3.10
+[ -d ".venv" ] || uv venv .venv --system-site-packages --python 3.12
 source .venv/bin/activate
-uv sync
+uv pip install -r requirements.txt
 
+[ -d ".venv_vision" ] || uv venv .venv_vision --python 3.10
+source .venv_vision/bin/activate
+uv pip install -r requirements_vision.txt
+
+source .venv/bin/activate
+export PYTHONPATH="$PYTHONPATH:$WS/external"
 
 echo "Setup complete!"
