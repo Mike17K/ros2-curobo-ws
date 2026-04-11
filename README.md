@@ -3,6 +3,22 @@
 1. Development is done inside Docker Dev Container ( plugin: Dev Containers )
 2. Understand all the commands of Makefile as is the main way of interacting with workspace
 
+# Base File Structure
+
+.
+├── assets                  # here all static reusable files
+├── docker                  # here all packages that are running inside docker containers
+├── docs                    # documentation files
+├── external                # external libraries and standalone repos
+│   ├── curobo
+│   └── depth_anything_v2
+├── scripts                 # helper scripts
+└── src                     # contains all packages that are running within the os, probably tho with different venvs for eachother
+
+# Environments
+1. in the docker folder there are seperate workspaces with exactly the same structure with this that should be developed from their own vsc inside dev containers that are specifing. And launched with their `scripts/launch.sh` script.
+2. in the workspace root (not for the docker child workspaces) can be more than one venv, based of the packages needs
+
 # Docs
 
 [Workspace Setup First Time](./docs/system_setup.md)

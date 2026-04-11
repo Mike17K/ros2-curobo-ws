@@ -1,26 +1,71 @@
 #!/bin/bash
+
+paste_cmd() {
+    local text="$1"
+    echo -n "$text" | xclip -selection clipboard
+    sleep 0.1
+    xdotool key ctrl+shift+v
+}
+
+move_up() {
+    xdotool key Alt+Up
+}
+move_down() {
+    xdotool key Alt+Down
+}
+move_left() {
+    xdotool key Alt+Left
+}
+move_right() {
+    xdotool key Alt+Right
+}
+
+broadcast_cmd() {
+    local cmd="$1"
+    xdotool key Super+g
+    sleep 0.5
+    xdotool key shift+ctrl+a
+    paste_cmd "$cmd"
+    xdotool key Return
+    xdotool key shift+ctrl+h
+}
+
+
 WS="/home/kaipis/Desktop/projects/robotics/curobo-test"
+GLOBAL_CMD="cd $WS && source /opt/ros/jazzy/setup.bash && source $WS/install/setup.bash && source $WS/.venv/bin/activate"
+LAYOUT_NAME="CuroboTest"
 
-# Σωστή σειρά: 1. ROS2 -> 2. Workspace -> 3. uv venv (τελευταίο για προτεραιότητα στην Python)
-GLOBAL_CMD="source /opt/ros/jazzy/setup.bash && source $WS/install/setup.bash && source $WS/.venv/bin/activate"
+# Launch Terminator with your saved layout
+terminator -l $LAYOUT_NAME &
+sleep 1
 
-# Στη Bash η συνένωση γίνεται απλά βάζοντας τις μεταβλητές τη μία δίπλα στην άλλη
-CMD1="$GLOBAL_CMD && cd $WS && make"
-CMD2="$GLOBAL_CMD && ros2 topic list"
-
-# 1. Άνοιξε το πρώτο παράθυρο με την CMD1
-# Χρησιμοποιούμε -u για να αποφύγουμε conflicts με dbus αν το terminator είναι ήδη ανοιχτό
-terminator -u -e "$CMD1; exec bash" &
-
-# Περίμενε να ανοίξει το παράθυρο (το Ubuntu 24 ίσως θέλει λίγο παραπάνω χρόνο)
-sleep 2 
-
-# 2. Εντοπισμός παραθύρου και Split
+# Get the newest Terminator window
 WID=$(xdotool search --class "terminator" | tail -1)
 xdotool windowactivate $WID
-xdotool key ctrl+shift+o
+sleep 0.5
+    
+# Run GLOBAL_CMD in all panes
+broadcast_cmd "$GLOBAL_CMD"
+sleep 0.5
 
-# 3. Στείλε την CMD2 στο νέο split
-sleep 1
-xdotool type "$CMD2"
-xdotool key Return
+# Make sure we're back to first pane
+move_up
+move_up
+move_up
+move_up
+move_up
+move_up
+move_up
+move_left
+move_left
+move_left
+move_left
+move_left
+move_left
+move_left
+sleep 0.5
+
+# Run ROS2 only in main pane
+paste_cmd "ros2 run opencv_cam opencv_cam_main" && xdotool key Return
+move_right
+paste_cmd "ros2 run rqt_image_view rqt_image_view" && xdotool key Return

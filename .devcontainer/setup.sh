@@ -11,6 +11,14 @@ apt update
 apt install -y \
     git git-lfs build-essential cmake ninja-build python3-numpy \
     python3-colcon-common-extensions ros-humble-desktop
+# camera deps
+apt install -y ros-humble-camera-calibration-parsers ros-humble-camera-info-manager ros-humble-camera-calibration
+# camera calibration deps
+apt install -y ros-humble-image-pipeline
+apt install ros-humble-launch-testing-ament-cmake
+apt-get update && apt-get install -y libgtk2.0-dev pkg-config libgl1-mesa-glx
+
+
 
 git lfs install
 
@@ -28,4 +36,4 @@ git config core.fileMode false
 git config core.autocrlf input
 
 source ~/.bashrc
-uv venv --system-site-packages
+uv venv --python 3.12 --system-site-packages .venv 

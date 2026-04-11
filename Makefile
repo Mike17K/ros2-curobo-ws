@@ -1,6 +1,6 @@
 # --- Config ---
 SHELL      := /bin/bash
-ROS_DISTRO := humble
+ROS_DISTRO := jazzy
 WS_ROOT    := $(shell pwd)
 # Χρησιμοποιούμε το uv run για να εκτελούμε εντολές εντός του venv αυτόματα
 RUN        := cd $(WS_ROOT) && source /opt/ros/$(ROS_DISTRO)/setup.bash && source .venv/bin/activate && uv run
@@ -63,7 +63,7 @@ deps:
 # 5. Maintenance
 clean:
 	@echo -e "$(Y)Cleaning workspace...$(RESET)"
-	rm -rf build/ install/ log/ .venv/
+	rm -rf build/ install/ log/
 
 
 # 6. UV Package Management

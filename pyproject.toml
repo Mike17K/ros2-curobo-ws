@@ -20,6 +20,7 @@ dependencies = [
     "gradio-imageslider>=0.0.20",
     "huggingface-hub>=1.10.1",
     "opencv-python>=4.13.0.92",
+    "pyqt5>=5.15.11",
 ]
 
 [tool.uv]
