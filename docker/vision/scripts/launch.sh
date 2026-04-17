@@ -1,0 +1,2 @@
+s
+ros2 run image_to_depth_generation depth_analyzer_node

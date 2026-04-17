@@ -1,8 +1,8 @@
 services:
   depth_anything_ros2_dev:
     build:
-      context: .
-      dockerfile: docker/Dockerfile.vision
+      context: docker/vision
+      dockerfile: Dockerfile
     container_name: depth_anything_ros2_dev
     image: curobo-ros2-dev-custom
     privileged: true
@@ -13,7 +13,8 @@ services:
       - ROS_DISTRO=humble
       - BASH_ENV=/opt/ros/humble/setup.bash
     volumes:
-      - .:/workspace:rw
+      - ./docker/vision:/workspace:rw
+      - ./src/custom_msgs:/workspace/src/custom_msgs:rw  # Προσθήκη αυτού
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
     working_dir: /workspace
     stdin_open: true # αντιστοιχεί στο -i

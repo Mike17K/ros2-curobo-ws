@@ -1,27 +1,18 @@
 {
     "name": "curobo-ros2-dev",
-     "build": {
-        "dockerfile": "Dockerfile",
-        "context": "."
-    },
-    "runArgs": [
-        "--gpus=all",
-        "--net=host",
-        "--privileged",
-        "-e",
-        "DISPLAY=${localEnv:DISPLAY}",
-        "-v",
-        "/tmp/.X11-unix:/tmp/.X11-unix"
-    ],
-    "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
+    // 1. Σύνδεση με το docker-compose
+    "dockerComposeFile": "../../../docker-compose.yaml", 
+    "service": "depth_anything_ros2_dev",
     "workspaceFolder": "/workspace",
+
+    // 2. Οι ρυθμίσεις environment και volumes τραβιούνται αυτόματα από το compose.
+    // Αν θέλεις να σιγουρέψεις ότι το VS Code "βλέπει" το display:
     "containerEnv": {
-        "DISPLAY": "${localEnv:DISPLAY}",
-        "NVIDIA_DRIVER_CAPABILITIES": "all",
-        "ROS_DISTRO": "humble",
-        "BASH_ENV": "/opt/ros/humble/setup.bash"
+        "DISPLAY": "${localEnv:DISPLAY}"
     },
+
     "postCreateCommand": "bash /workspace/scripts/setup_workspace.sh",
+
     "customizations": {
         "vscode": {
             "extensions": [
@@ -32,6 +23,7 @@
                 "nvidia.nsight-vscode-edition"
             ],
             "settings": {
+                // Χρήση του venv που είδαμε πριν
                 "python.defaultInterpreterPath": "/workspace/.venv/bin/python",
                 "python.terminal.activateEnvInSelectedTerminal": true,
                 "ros.distro": "humble"

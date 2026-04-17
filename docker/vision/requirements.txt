@@ -1,7 +1,6 @@
+# Torch is provided by the base NVIDIA image.
 gradio_imageslider
 gradio
-torch
-torchvision
 opencv-python
 matplotlib
 huggingface_hub==0.21.0

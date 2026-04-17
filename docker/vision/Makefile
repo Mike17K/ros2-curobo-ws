@@ -1,10 +1,9 @@
 # --- Config ---
 SHELL      := /bin/bash
-ROS_DISTRO := jazzy
-WS_ROOT    := $(shell pwd)
-# Χρησιμοποιούμε το uv run για να εκτελούμε εντολές εντός του venv αυτόματα
-RUN        := cd $(WS_ROOT) && source /opt/ros/$(ROS_DISTRO)/setup.bash && uv run
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/hpcx/ucx/lib:/opt/hpcx/ucc/lib
+ROS_DISTRO := humble
+# Use uv run with the project environment
+RUN        := source /opt/ros/$(ROS_DISTRO)/setup.bash && uv run
+export LD_LIBRARY_PATH := $(LD_LIBRARY_PATH):/opt/hpcx/ucx/lib:/opt/hpcx/ucc/lib
 
 # Colors
 G=\033[0;32m
@@ -24,7 +23,7 @@ activate:
 	@echo -e "$(C)Activating virtual environment...$(RESET)"
 	source .venv/bin/activate
 
-build:
+build: sync
 	@echo -e "$(G)Building all packages...$(RESET)"
 	@# Clean container-built artifacts to avoid CMake path mismatch on host
 	@if [ -d build ]; then \
@@ -37,11 +36,10 @@ build:
 	--symlink-install \
 	--parallel-workers 2 \
 	--base-paths src \
-	--packages-skip image_to_depth_generation \
 	--cmake-args $(CMAKE_DEFAULT_FLAGS) -DCMAKE_BUILD_TYPE=Release
 
-build_vision:
-	source .venv_vision/bin/activate && $(RUN) colcon build \
+build_vision: sync
+	$(RUN) colcon build \
 	--symlink-install \
 	--parallel-workers 2 \
 	--base-paths src/vision \
@@ -49,24 +47,24 @@ build_vision:
 
 
 # 2. Build Single Package (make builds n=όνομα)
-builds:
+builds: sync
 	@if [ -z "$(n)" ]; then echo -e "$(R)Error: Provide name (n=name)$(RESET)"; exit 1; fi
 	$(RUN) colcon build --packages-select $(n) --symlink-install --base-paths src --cmake-args $(CMAKE_DEFAULT_FLAGS) -DCMAKE_BUILD_TYPE=Release
 
 # 3. Δημιουργία Πακέτων
 create-cpp:
 	@if [ -z "$(n)" ]; then echo -e "$(R)Error: Provide name (n=name)$(RESET)"; exit 1; fi
-	cd src && $(RUN) ros2 pkg create --build-type ament_cmake --destination-directory src $(n)
+	$(RUN) ros2 pkg create --build-type ament_cmake --destination-directory src $(n)
 
 create-py:
 	@if [ -z "$(n)" ]; then echo -e "$(R)Error: Provide name (n=name)$(RESET)"; exit 1; fi
-	cd src && $(RUN) ros2 pkg create --build-type ament_python --destination-directory src $(n)
+	$(RUN) ros2 pkg create --build-type ament_python --destination-directory src $(n)
 
 # 4. Debug & Deps
-debug:
+debug: sync
 	$(RUN) colcon build --symlink-install --base-paths src --cmake-args $(CMAKE_DEFAULT_FLAGS) -DCMAKE_BUILD_TYPE=Debug
 
-debugs:
+debugs: sync
 	$(RUN) colcon build --packages-select $(n) --symlink-install --base-paths src --cmake-args $(CMAKE_DEFAULT_FLAGS) -DCMAKE_BUILD_TYPE=Debug
 
 deps:
@@ -96,6 +94,11 @@ run: builds
 	@echo -e "$(G)Running $(n)/$(e)...$(RESET)"
 	source install/setup.bash && ros2 run $(n) $(e)
 
+sync:
+	@echo -e "$(C)Syncing Python dependencies...$(RESET)"
+	@[ -d .venv ] || uv venv --system-site-packages .venv
+	uv sync
+
 dev:
 	@chmod +x scripts/*.sh
-	./scripts/run_layout.sh
+	./scripts/setup_workspace.sh

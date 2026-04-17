@@ -1,0 +1,18 @@
+[project]
+name = "image-to-depth-generation"
+version = "0.0.0"
+requires-python = ">=3.10"
+dependencies = [
+  "gradio_imageslider",
+  "gradio",
+  "opencv-python",
+  "matplotlib",
+  "huggingface_hub==0.21.0",
+  "numpy<2",
+]
+
+[project.optional-dependencies]
+torch = [
+  "torch",
+  "torchvision",
+]

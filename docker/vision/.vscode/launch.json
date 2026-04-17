@@ -1,0 +1,27 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        // {
+        //     "name": "C++: Attach to Node",
+        //     "type": "cppdbg",
+        //     "request": "attach",
+        //     "program": "${workspaceFolder}/install/my_cpp_package/lib/my_cpp_package/my_node_executable",
+        //     "processId": "${command:pickProcess}",
+        //     "MIMode": "gdb",
+        //     "miDebuggerPath": "/usr/bin/gdb",
+        //     "setupCommands": [
+        //         {
+        //             "description": "Enable pretty-printing for gdb",
+        //             "text": "-enable-pretty-printing",
+        //             "ignoreFailures": true
+        //         }
+        //     ]
+        // },
+        {
+            "name": "Python: Attach by Process ID",
+            "type": "debugpy",
+            "request": "attach",
+            "processId": "${command:pickProcess}"
+        }
+    ]
+}
