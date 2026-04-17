@@ -1,0 +1,6 @@
+# Request
+sensor_msgs/Image input_image
+---
+# Response
+sensor_msgs/Image output_image
+bool success

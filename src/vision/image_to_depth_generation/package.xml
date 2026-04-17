@@ -19,6 +19,24 @@
   <test_depend>ament_pep257</test_depend>
   <test_depend>python3-pytest</test_depend>
 
+  <depend>sensor_msgs</depend>
+  <depend>cv_bridge</depend>
+  <depend>std_msgs</depend>
+  <depend>rclpy</depend>
+  <depend>custom_msgs</depend>
+
+
+  <depend>shared_utils</depend>
+  <depend>matplotlib</depend>
+  <depend>scipy</depend>
+  <depend>numpy</depend>
+  <depend>gradio_imageslider</depend>
+  <depend>gradio</depend>
+  <depend>torch</depend>
+  <depend>torchvision</depend>
+  <depend>opencv-python</depend>
+  <depend>huggingface_hub</depend>
+
   <export>
     <build_type>ament_python</build_type>
   </export>

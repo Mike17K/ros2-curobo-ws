@@ -49,6 +49,7 @@ setup(
     entry_points={
         "console_scripts": [
             "depth_anything_v2_node = image_to_depth_generation.depth_anything_v2_node:main",
+            "depth_analyzer_node = image_to_depth_generation.depth_analyzer_node:main",
         ],
     },
 )

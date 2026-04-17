@@ -84,5 +84,5 @@ move_down
 move_left
 paste_cmd  "$(_vision_venv_cmd)" && xdotool key Return
 sleep 0.5
-paste_cmd "python3 install/experimentation/lib/experimentation/depth_anything_v2_test"
-
+# paste_cmd "python3 install/experimentation/lib/experimentation/depth_anything_v2_test"
+paste_cmd "python3 install/image_to_depth_generation/lib/image_to_depth_generation/depth_analyzer_node"

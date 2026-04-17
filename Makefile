@@ -48,11 +48,11 @@ builds:
 # 3. Δημιουργία Πακέτων
 create-cpp:
 	@if [ -z "$(n)" ]; then echo -e "$(R)Error: Provide name (n=name)$(RESET)"; exit 1; fi
-	cd src && ros2 pkg create --build-type ament_cmake $(n)
+	cd src && $(RUN) ros2 pkg create --build-type ament_cmake --destination-directory src $(n)
 
 create-py:
 	@if [ -z "$(n)" ]; then echo -e "$(R)Error: Provide name (n=name)$(RESET)"; exit 1; fi
-	cd src && ros2 pkg create --build-type ament_python $(n)
+	cd src && $(RUN) ros2 pkg create --build-type ament_python --destination-directory src $(n)
 
 # 4. Debug & Deps
 debug:
