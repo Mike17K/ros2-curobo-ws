@@ -5,4 +5,4 @@ torchvision
 opencv-python
 matplotlib
 huggingface_hub==0.21.0
-numpy
+numpy<2

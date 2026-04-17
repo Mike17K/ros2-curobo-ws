@@ -1,0 +1,27 @@
+services:
+  depth_anything_ros2_dev:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.vision
+    container_name: depth_anything_ros2_dev
+    image: curobo-ros2-dev-custom
+    privileged: true
+    network_mode: host
+    environment:
+      - DISPLAY=${DISPLAY}
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      - ROS_DISTRO=humble
+      - BASH_ENV=/opt/ros/humble/setup.bash
+    volumes:
+      - .:/workspace:rw
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    working_dir: /workspace
+    stdin_open: true # αντιστοιχεί στο -i
+    tty: true        # αντιστοιχεί στο -t
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
