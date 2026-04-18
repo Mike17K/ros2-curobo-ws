@@ -9,6 +9,7 @@ dependencies = [
   "matplotlib",
   "huggingface_hub==0.21.0",
   "numpy<2",
+  "xformers>=0.0.35",
 ]
 
 [project.optional-dependencies]

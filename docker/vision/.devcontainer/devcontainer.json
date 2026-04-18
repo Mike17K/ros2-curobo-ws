@@ -5,14 +5,11 @@
     "service": "depth_anything_ros2_dev",
     "workspaceFolder": "/workspace",
 
-    // 2. Οι ρυθμίσεις environment και volumes τραβιούνται αυτόματα από το compose.
-    // Αν θέλεις να σιγουρέψεις ότι το VS Code "βλέπει" το display:
-    "containerEnv": {
-        "DISPLAY": "${localEnv:DISPLAY}"
-    },
-
     "postCreateCommand": "bash /workspace/scripts/setup_workspace.sh",
-
+    "runArgs": [
+        "--privileged",
+        "--network=host"
+    ],
     "customizations": {
         "vscode": {
             "extensions": [

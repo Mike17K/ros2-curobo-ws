@@ -81,4 +81,11 @@ uv pip install -r requirements_vision.txt
 source .venv/bin/activate
 export PYTHONPATH="$PYTHONPATH:$WS/external"
 
+# configure docker size
+sudo sysctl -w net.core.rmem_max=2147483647
+sudo sysctl -w net.core.rmem_default=2147483647
+sudo sysctl -w net.core.wmem_max=2147483647
+sudo sysctl -w net.core.wmem_default=2147483647
+
+
 echo "Setup complete!"

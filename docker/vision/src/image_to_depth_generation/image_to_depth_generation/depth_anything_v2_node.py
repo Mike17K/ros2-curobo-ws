@@ -128,6 +128,7 @@ class DepthAnythingV2Node(Node):
             self._last_header = msg.header
 
     def _on_trigger(self, _request: Trigger.Request, response: Trigger.Response) -> Trigger.Response:
+        self.get_logger().info("Trigger received, generating depth...")
         if self.model is None:
             response.success = False
             response.message = "Model not loaded. Check 'model_path'."

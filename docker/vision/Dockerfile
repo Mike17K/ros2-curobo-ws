@@ -37,8 +37,8 @@ RUN set -euo pipefail \
     python3-venv \
     nano \
     ros-humble-cv-bridge \
+    ros-humble-rmw-fastrtps-cpp \
     && rm -rf /var/lib/apt/lists/*
-
 
 # Εγκατάσταση uv (venv management)
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh

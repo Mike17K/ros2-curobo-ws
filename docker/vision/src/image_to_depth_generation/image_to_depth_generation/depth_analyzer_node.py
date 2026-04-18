@@ -47,21 +47,32 @@ class DepthAnalyzerNode(Node): # Κληρονομικότητα
 
         self.generate_depth_srv = self.create_service(DepthImageGeneration, 'generate_depth', self.handle_generate_depth)
         self.bridge = CvBridge()
-
+   
     def handle_generate_depth(self, request, response):
-        # 1. Μετατροπή ROS Image σε OpenCV (BGR)
+        # 1. Μετατροπή ROS Image σε OpenCV
         cv_image = self.bridge.imgmsg_to_cv2(request.input_image, "bgr8")
 
-        # 2. Επεξεργασία (π.χ. Μετατροπή σε Grayscale)
-        depth_map = self.analyze_image(cv_image)
+        # 2. Inference
+        depth_map = self.analyze_image(cv_image) # Αυτό επιστρέφει float32
         
-        # 3. Μετατροπή ξανά σε ROS Image για την απάντηση
-        # Χρησιμοποιούμε "mono8" για grayscale ή "bgr8" για χρώμα
-        response.output_image = self.bridge.cv2_to_imgmsg(depth_map, "mono8")
+        # --- ΚΡΙΣΙΜΗ ΠΡΟΣΘΗΚΗ: Μετατροπή σε uint8 για το ROS Image ---
+        # Κανονικοποίηση στο 0-255
+        depth_min, depth_max = depth_map.min(), depth_map.max()
+        if depth_max > depth_min:
+            depth_norm = (depth_map - depth_min) / (depth_max - depth_min) * 255.0
+        else:
+            depth_norm = depth_map * 0.0
+            
+        depth_uint8 = depth_norm.astype(np.uint8)
+        # -----------------------------------------------------------
+
+        # 3. Μετατροπή σε ROS Image
+        response.output_image = self.bridge.cv2_to_imgmsg(depth_uint8, "mono8")
         response.success = True
-        
+        self.get_logger().info('Depth image generated successfully!')
         return response
-    
+
+
     def analyze_image(self, img):
         start_time = time.time()
         depth = self.depth_model.infer_image(img)

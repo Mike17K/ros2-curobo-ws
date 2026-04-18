@@ -19,6 +19,8 @@ source .venv/bin/activate
 
 export PYTHONPATH="${PYTHONPATH:-}:$WS/external"
 
+
+
 echo "alias s='source .venv/bin/activate && source install/setup.bash'" >> ~/.bashrc
 
 echo "Setup complete."

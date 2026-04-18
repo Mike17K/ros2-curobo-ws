@@ -6,12 +6,24 @@ services:
     container_name: depth_anything_ros2_dev
     image: curobo-ros2-dev-custom
     privileged: true
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
     network_mode: host
     environment:
       - DISPLAY=${DISPLAY}
       - NVIDIA_DRIVER_CAPABILITIES=all
       - ROS_DISTRO=humble
       - BASH_ENV=/opt/ros/humble/setup.bash
+      # ΠΡΟΣΘΗΚΗ ΤΩΝ ΠΑΡΑΚΑΤΩ
+      - FASTRTPS_DEFAULT_PROFILES_FILE=/workspace/fastrtps_enp34s0.xml
+      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+      - ROS_DOMAIN_ID=0
+      - ROS_LOCALHOST_ONLY=0      
     volumes:
       - ./docker/vision:/workspace:rw
       - ./src/custom_msgs:/workspace/src/custom_msgs:rw  # Προσθήκη αυτού
