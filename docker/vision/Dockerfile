@@ -38,6 +38,13 @@ RUN set -euo pipefail \
     nano \
     ros-humble-cv-bridge \
     ros-humble-rmw-fastrtps-cpp \
+    # navigation stack dependencies
+    ros-humble-navigation2 \
+    ros-humble-nav2-bringup \
+    # optional: Gazebo for simulation
+    ros-humble-gazebo-ros-pkgs \
+    # optional for learning easy
+    ros-humble-turtlebot3* terminator \
     && rm -rf /var/lib/apt/lists/*
 
 # Εγκατάσταση uv (venv management)

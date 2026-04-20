@@ -3,6 +3,7 @@
     <Domain id="any">
         <General>
             <NetworkInterfaceAddress>enp34s0</NetworkInterfaceAddress>
+            <!-- <NetworkInterfaceAddress>eno1</NetworkInterfaceAddress> -->
         </General>
     </Domain>
 </CycloneDDS>
