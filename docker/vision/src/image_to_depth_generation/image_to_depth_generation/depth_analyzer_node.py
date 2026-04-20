@@ -9,7 +9,7 @@ import os
 import re
 import time
 
-from custom_msgs.srv import DepthImageGeneration
+from shared_msgs.srv import DepthImageGeneration
 from cv_bridge import CvBridge
 
 class DepthAnythingV2Inference:

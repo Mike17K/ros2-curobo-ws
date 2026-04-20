@@ -18,7 +18,7 @@
   "python.analysis.extraPaths": [
     "/opt/ros/humble/lib/python3.10/site-packages",
     "/opt/ros/humble/local/lib/python3.10/dist-packages",
-    "${workspaceFolder}/install/custom_msgs/lib/python3.10/site-packages",
+    "${workspaceFolder}/install/shared_msgs/lib/python3.10/site-packages",
     "${workspaceFolder}/install/local/lib/python3.10/dist-packages",
     "${workspaceFolder}/src",
     "${workspaceFolder}/external"
@@ -41,12 +41,24 @@
   "python.autoComplete.extraPaths": [
     "/opt/ros/humble/lib/python3.10/site-packages",
     "/opt/ros/humble/local/lib/python3.10/dist-packages",
-    "${workspaceFolder}/install/custom_msgs/lib/python3.10/site-packages",
+    "${workspaceFolder}/install/shared_msgs/lib/python3.10/site-packages",
     "${workspaceFolder}/install/local/lib/python3.10/dist-packages",
     "${workspaceFolder}/src",
     "${workspaceFolder}/external"
   ],
   "cmake.sourceDirectory": "/workspace",
   "ROS2.distro": "humble",
-  "cmake.ignoreCMakeListsMissing": true
+  "cmake.ignoreCMakeListsMissing": true,
+      "files.exclude": {
+        "build/": true,
+        "install/": true,
+        "log/": true,
+        "**/__pycache__": true,
+        "**/*.pyc": true
+    },
+    "search.exclude": {
+        "build/": true,
+        "install/": true,
+        "log/": true
+    }
 }

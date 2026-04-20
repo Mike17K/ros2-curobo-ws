@@ -74,10 +74,6 @@ git config core.autocrlf input
 source .venv/bin/activate
 uv pip install -r requirements.txt
 
-[ -d ".venv_vision" ] || uv venv .venv_vision --python 3.10
-source .venv_vision/bin/activate
-uv pip install -r requirements_vision.txt
-
 source .venv/bin/activate
 export PYTHONPATH="$PYTHONPATH:$WS/external"
 

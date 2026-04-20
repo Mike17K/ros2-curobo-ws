@@ -26,7 +26,7 @@ services:
       - ROS_LOCALHOST_ONLY=0      
     volumes:
       - ./docker/vision:/workspace:rw
-      - ./src/custom_msgs:/workspace/src/custom_msgs:rw  # Προσθήκη αυτού
+      - ./src/shared_msgs:/workspace/src/shared_msgs:rw  # Προσθήκη αυτού
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
     working_dir: /workspace
     stdin_open: true # αντιστοιχεί στο -i
