@@ -36,6 +36,7 @@ RUN set -euo pipefail \
     python3-argcomplete \
     python3-venv \
     nano \
+    ros-humble-rqt-graph \
     ros-humble-cv-bridge \
     ros-humble-rmw-fastrtps-cpp \
     # navigation stack dependencies
