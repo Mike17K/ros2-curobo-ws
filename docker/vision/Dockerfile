@@ -48,6 +48,8 @@ RUN set -euo pipefail \
     ros-humble-turtlebot3* terminator \
     && rm -rf /var/lib/apt/lists/*
 
+RUN sudo apt update && sudo apt install ros-humble-rqt* -y
+
 # Εγκατάσταση uv (venv management)
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 

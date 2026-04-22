@@ -84,6 +84,7 @@ sudo sysctl -w net.core.wmem_max=2147483647
 sudo sysctl -w net.core.wmem_default=2147483647
 
 # optional cause we added volums to docker-compose.yaml
-# xhost +local:root
+# xhost +local:root if not exists
+cat ~/.bashrc | grep -q "xhost +local:root" || echo "xhost +local:root" >> ~/.bashrc
 
 echo "Setup complete!"
