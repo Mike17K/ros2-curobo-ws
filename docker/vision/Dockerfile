@@ -17,6 +17,8 @@ RUN set -euo pipefail \
     locales \
     software-properties-common \
     curl \
+    xdotool \
+    xclip \
     gnupg2 \
     lsb-release \
     && locale-gen en_US en_US.UTF-8 \
