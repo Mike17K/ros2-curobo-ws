@@ -18,7 +18,8 @@ uv sync
 source .venv/bin/activate
 
 export PYTHONPATH="${PYTHONPATH:-}:$WS/external"
-
+export LD_LIBRARY_PATH=/opt/hpcx/ucx/lib:/opt/hpcx/ucc/lib:$LD_LIBRARY_PATH
+export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 
 
 echo "alias s='source ~/.bashrc && source .venv/bin/activate && source install/setup.bash'" >> ~/.bashrc

@@ -14,7 +14,7 @@ class DevelopWithEditable(develop):
         super().initialize_options()
         self.editable = None
         self.build_directory = None
-        self.no_deps = None
+        self.no_deps = False
         self.script_dir = None
 
     def finalize_options(self):

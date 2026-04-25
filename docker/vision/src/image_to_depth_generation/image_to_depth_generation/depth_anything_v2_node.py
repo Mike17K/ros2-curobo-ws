@@ -5,14 +5,13 @@ import time
 
 import numpy as np
 import rclpy
-from rclpy.node import Node
+import torch
+from ament_index_python.packages import get_package_share_directory
+from cv_bridge import CvBridge
 from rclpy.executors import ExternalShutdownException
+from rclpy.node import Node
 from sensor_msgs.msg import Image
 from std_srvs.srv import Trigger
-from cv_bridge import CvBridge
-import torch
-
-from ament_index_python.packages import get_package_share_directory
 
 
 class DepthAnythingV2Node(Node):
@@ -45,7 +44,7 @@ class DepthAnythingV2Node(Node):
         self._load_model(
             encoder=encoder,
             features=features,
-            out_channels=list(out_channels),
+            out_channels=list(out_channels if out_channels is not None else []),
         )
 
         self.bridge = CvBridge()
@@ -97,15 +96,14 @@ class DepthAnythingV2Node(Node):
     def _load_model(self, encoder: str, features: int, out_channels: list) -> None:
         if not os.path.isfile(self._model_path):
             self.get_logger().error(
-                "Model file not found: %s. Set 'model_path' parameter to a valid checkpoint.",
-                self._model_path,
+                "Model file not found: "+ self._model_path+". Set 'model_path' parameter to a valid checkpoint.",
             )
             return
 
         try:
             from depth_anything_v2.dpt import DepthAnythingV2
         except Exception as exc:
-            self.get_logger().error("Failed to import depth_anything_v2: %s", exc)
+            self.get_logger().error("Failed to import depth_anything_v2: " + str(exc))
             return
 
         self.model = DepthAnythingV2(

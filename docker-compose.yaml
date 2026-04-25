@@ -19,21 +19,22 @@ services:
       - NVIDIA_DRIVER_CAPABILITIES=all
       - ROS_DISTRO=humble
       - BASH_ENV=/opt/ros/humble/setup.bash
-      - XAUTHORITY=/tmp/.docker.xauth  
+      - XAUTHORITY=/tmp/.docker.xauth
       # ΠΡΟΣΘΗΚΗ ΤΩΝ ΠΑΡΑΚΑΤΩ
       - FASTRTPS_DEFAULT_PROFILES_FILE=/workspace/fastrtps_enp34s0.xml
       - RMW_IMPLEMENTATION=rmw_fastrtps_cpp # TODO test the rmw_cyclonedds_cpp
       - ROS_DOMAIN_ID=0
-      - ROS_LOCALHOST_ONLY=0      
+      - ROS_LOCALHOST_ONLY=0
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - ~/.Xauthority:/root/.Xauthority:rw # Προσθήκη
       - /tmp/.docker.xauth:/tmp/.docker.xauth:rw
       - ./docker/vision:/workspace:rw
-      - ./src/shared_msgs:/workspace/src/shared_msgs:rw  # Προσθήκη αυτού
+      - ./src/shared_msgs:/workspace/src/shared_msgs:rw # Προσθήκη αυτού
+      - /dev:/dev:rw
     working_dir: /workspace
     stdin_open: true # αντιστοιχεί στο -i
-    tty: true        # αντιστοιχεί στο -t
+    tty: true # αντιστοιχεί στο -t
     deploy:
       resources:
         reservations:

@@ -1,4 +1,5 @@
 #!/bin/bash
+export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 
 # Ενεργοποίηση των aliases μέσα στο script
 shopt -s expand_aliases
@@ -39,11 +40,19 @@ terminator -u -g $WS/terminator_config -l $LAYOUT_NAME &
 sleep 0.5
 
 # 2. Εστίαση στο παράθυρο του Terminator
-WID=$(xdotool search --onlyvisible --class "terminator" | tail -1)
+MAX_RETRIES=10
+WID=""
+while [ -z "$WID" ] && [ $MAX_RETRIES -gt 0 ]; do
+    WID=$(xdotool search --onlyvisible --class "terminator" | tail -1)
+    [ -z "$WID" ] && sleep 1
+    ((MAX_RETRIES--))
+done
+
 if [ -z "$WID" ]; then
-    echo "Error: Could not find Terminator window."
+    echo "Error: Terminator window not found."
     exit 1
 fi
+
 xdotool windowactivate $WID
 sleep 0.2
 
@@ -59,12 +68,59 @@ broadcast_off
 
 # --- PANEL 1 (Πάνω): Camera Input Node ---
 echo "Configuring Panel 1..."
-# paste_cmd "ros2 run your_package_name camera_node" # Ξεσχολίασε και βάλε το σωστό node
+paste_cmd 'ros2 run gscam gscam_node --ros-args \
+  -p gscam_config:="v4l2src device=/dev/video2 ! video/x-raw,width=720,height=480 ! videoconvert" \
+  -p camera_info_url:=file:///workspace/assets/calibrations/webcam/ost.yaml \
+  -p camera_name:=webcam \
+  --remap /camera/image_raw:=/webcam/image_raw \
+  --remap /camera/camera_info:=/webcam/camera_info
+'
 
 # --- PANEL 2 (Κάτω): Depth Estimation Node ---
 echo "Configuring Panel 2..."
 move_down
-sleep 0.3
-# paste_cmd "ros2 run image_to_depth_generation depth_anything_v2_node"
+paste_cmd "ros2 run rqt_image_view rqt_image_view"
+
+# --- PANEL 3 (Δεξιά): Depth Image View ---
+echo "Configuring Panel 3..."
+move_up
+move_right
+paste_cmd "ros2 run image_to_depth_generation depth_anything_v2_node --ros-args \
+  -p model_path:=/workspace/assets/checkpoints/depth_anything_v2_vits.pth \
+  -p input_topic:=/webcam/image_raw \
+  -p output_topic:=/webcam/depth_image \
+  -p service_name:=/webcam/trigger_depth
+"
+
+
+
+
+
+
+
+# for drone camera pannel
+# ros2 run gscam gscam_node --ros-args   -p gscam_config:="v4l2src device=/dev/video0 ! video/x-raw,width=720,height=480 ! videoconvert"   -p camera_info_url:=file:///workspace/assets/calibrations/drone/ost.yaml   -p camera_name:=drone   --remap /camera/image_raw:=/drone/image_raw   --remap /camera/camera_info:=/drone/camera_info
+# ros2 run rqt_image_view rqt_image_view
+# ros2 run image_to_depth_generation depth_anything_v2_node --ros-args   -p model_path:=/workspace/assets/checkpoints/depth_anything_v2_vits.pth   -p input_topic:=/drone/image_raw   -p output_topic:=/drone/depth_image   -p service_name:=/drone/trigger_depth
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 echo "Setup complete."
