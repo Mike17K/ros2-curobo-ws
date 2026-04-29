@@ -16,7 +16,6 @@ install(
     description  # Ή όπως αλλιώς λες τον φάκελο με τα xacro σου
     config       # Αν έχεις αρχεία παραμέτρων .yaml
     meshes       # Αν έχεις αρχεία .stl ή .dae για το drone
-    worlds        # Αν έχεις αρχεία .world για το Gazebo
   DESTINATION share/${PROJECT_NAME}
 )
 # --------------------------------

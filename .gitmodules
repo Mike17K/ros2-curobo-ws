@@ -17,3 +17,6 @@
 	path = docker/gz-sim-environment
 	url = https://github.com/suchetanrs/gz-sim-environment
 	branch = humble
+[submodule "external/PX4-Autopilot"]
+	path = external/PX4-Autopilot
+	url = https://github.com/PX4/PX4-Autopilot.git

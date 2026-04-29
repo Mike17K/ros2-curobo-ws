@@ -6,7 +6,9 @@
         "ms-python.python",
         "ms-python.debugpy",
         "dbaeumer.vscode-eslint",
-        "spmeesseman.vscode-taskexplorer",
-        "esbenp.prettier-vscode"
+        "esbenp.prettier-vscode",
+        "smilerobotics.urdf",
+        "redhat.vscode-xml",
+        "ms-vscode.cmake-tools",
     ]
 }

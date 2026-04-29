@@ -90,5 +90,36 @@ cat ~/.bashrc | grep -q "xhost +local:root" || echo "xhost +local:root" >> ~/.ba
 sudo sudo apt-get update
 sudo apt install ros-jazzy-xacro
 
+# install gazebo_ros packages
+sudo apt-get update
+sudo apt-get install curl lsb-release gnupg
+
+sudo curl https://packages.osrfoundation.org/gazebo.gpg --output /usr/share/keyrings/pkgs-osrf-archive-keyring.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/pkgs-osrf-archive-keyring.gpg] https://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/gazebo-stable.list > /dev/null
+sudo apt-get update
+sudo apt-get install gz-harmonic
+
+# install ardupilot for gazebo simulation
+sudo apt update
+sudo apt install -y git python3-pip python3-dev wget build-essential cmake
+git submodule add https://github.com/ArduPilot/ardupilot.git external/ardupilot
+cd external/ardupilot
+git submodule update --init --recursive
+./Tools/environment_install/install-prereqs-ubuntu.sh -y
+
+# Εγκατάσταση ardupilot_gazebo plugin
+cd ~
+git submodule add https://github.com/ArduPilot/ardupilot_gazebo.git external/ardupilot_gazebo
+cd external/ardupilot_gazebo
+mkdir build && cd build
+cmake ..
+make -j$(nproc)
+sudo make install
+echo 'export GAZEBO_PLUGIN_PATH=$GAZEBO_PLUGIN_PATH:/usr/local/lib' >> ~/.bashrc
+echo 'export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:/usr/local/share/gazebo-11/models' >> ~/.bashrc
+source ~/.bashrc
+
+export GZ_SIM_RESOURCE_PATH=$GZ_SIM_RESOURCE_PATH:/usr/share/gz/gz-sim8/models
+
 
 echo "Setup complete!"

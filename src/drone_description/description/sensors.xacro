@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+    <!-- ===================== -->
+    <!-- IMU SENSOR (gz-sim)   -->
+    <!-- ===================== -->
+    <link name="imu_link">
+        <sensor name="imu_sensor" type="imu">
+            <always_on>true</always_on>
+            <update_rate>100</update_rate>
+            <visualize>false</visualize>
+
+            <!-- Gazebo Sim system plugin -->
+            <plugin name="imu_system" filename="gz-sim-imu-system" />
+        </sensor>
+    </link>
+
+    <joint name="imu_joint" type="fixed">
+        <parent link="base_link" />
+        <child link="imu_link" />
+    </joint>
+
+    <!-- ===================== -->
+    <!-- GPS SENSOR (gz-sim)   -->
+    <!-- ===================== -->
+    <link name="gps_link">
+        <sensor name="navsat_sensor" type="navsat">
+            <always_on>true</always_on>
+            <update_rate>10</update_rate>
+            <visualize>false</visualize>
+
+            <!-- Gazebo Sim system plugin -->
+            <plugin name="navsat_system" filename="gz-sim-navsat-system" />
+        </sensor>
+    </link>
+
+    <joint name="gps_joint" type="fixed">
+        <parent link="base_link" />
+        <child link="gps_link" />
+    </joint>
+
+</robot>
