@@ -38,6 +38,7 @@ RUN set -euo pipefail \
     terminator \
     # GUI & Tools
     ros-humble-rqt* \
+    ros-humble-rviz2 \
     ros-humble-cv-bridge \
     # Camera & GStreamer
     ros-humble-gscam \

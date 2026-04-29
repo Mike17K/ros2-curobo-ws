@@ -5,12 +5,13 @@ import time
 
 import numpy as np
 import rclpy
+import sensor_msgs_py.point_cloud2 as pc2
 import torch
 from ament_index_python.packages import get_package_share_directory
 from cv_bridge import CvBridge
 from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import CameraInfo, Image, PointCloud2
 from std_srvs.srv import Trigger
 
 
@@ -22,6 +23,8 @@ class DepthAnythingV2Node(Node):
         self.declare_parameter("input_topic", "image_raw")
         self.declare_parameter("output_topic", "depth_image")
         self.declare_parameter("service_name", "trigger_depth")
+        self.declare_parameter("pointcloud_topic", "pointcloud")
+        self.declare_parameter("camera_info_topic", "camera_info")
         self.declare_parameter("encoder", "vits")
         self.declare_parameter("features", 64)
         self.declare_parameter("out_channels", [48, 96, 192, 384])
@@ -31,6 +34,8 @@ class DepthAnythingV2Node(Node):
         input_topic = self.get_parameter("input_topic").get_parameter_value().string_value
         output_topic = self.get_parameter("output_topic").get_parameter_value().string_value
         service_name = self.get_parameter("service_name").get_parameter_value().string_value
+        pointcloud_topic = self.get_parameter("pointcloud_topic").get_parameter_value().string_value
+        camera_info_topic = self.get_parameter("camera_info_topic").get_parameter_value().string_value
         encoder = self.get_parameter("encoder").get_parameter_value().string_value
         features = self.get_parameter("features").get_parameter_value().integer_value
         out_channels = self.get_parameter("out_channels").value
@@ -51,9 +56,12 @@ class DepthAnythingV2Node(Node):
         self._lock = threading.Lock()
         self._last_image = None
         self._last_header = None
+        self._last_camera_info = None
 
-        self.image_sub = self.create_subscription(Image, input_topic, self._on_image, 10)
-        self.depth_pub = self.create_publisher(Image, output_topic, 10)
+        self.image_sub = self.create_subscription(Image, input_topic, self._on_image, 1)
+        self.camera_info_sub = self.create_subscription(CameraInfo, camera_info_topic, self._on_camera_info, 1)
+        self.depth_pub = self.create_publisher(Image, output_topic, 1)
+        self.cloud_pub = self.create_publisher(PointCloud2, pointcloud_topic, 1)
         self.trigger_srv = self.create_service(Trigger, service_name, self._on_trigger)
 
         self.get_logger().info(
@@ -125,6 +133,10 @@ class DepthAnythingV2Node(Node):
             self._last_image = image
             self._last_header = msg.header
 
+    def _on_camera_info(self, msg: CameraInfo) -> None:
+        with self._lock:
+            self._last_camera_info = msg
+
     def _on_trigger(self, _request: Trigger.Request, response: Trigger.Response) -> Trigger.Response:
         self.get_logger().info("Trigger received, generating depth...")
         if self.model is None:
@@ -138,16 +150,44 @@ class DepthAnythingV2Node(Node):
                 return response
             image = self._last_image.copy()
             header = self._last_header
+            camera_info = self._last_camera_info
+
+        if camera_info is None or len(camera_info.k) < 9:
+            response.success = False
+            response.message = "No camera_info received yet"
+            return response
 
         start_time = time.time()
         with torch.no_grad():
             depth = self.model.infer_image(image)
 
         depth = np.asarray(depth, dtype=np.float32)
+
+        k = camera_info.k
+        if k[0] <= 0.0 or k[4] <= 0.0:
+            response.success = False
+            response.message = "Invalid camera_info intrinsics"
+            return response
+        fx = k[0]
+        fy = k[4]
+        cx = k[2]
+        cy = k[5]
+
+        h, w = depth.shape
+        u_coords, v_coords = np.meshgrid(np.arange(w), np.arange(h))
+        z = depth
+        valid = z > 0.0
+        x = (u_coords - cx) * z / fx
+        y = (v_coords - cy) * z / fy
+        points = np.stack((x, y, z), axis=-1)[valid]
+
         depth_msg = self.bridge.cv2_to_imgmsg(depth, encoding="32FC1")
         if header is not None:
             depth_msg.header = header
         self.depth_pub.publish(depth_msg)
+
+        cloud_msg = pc2.create_cloud_xyz32(depth_msg.header, points)
+        self.cloud_pub.publish(cloud_msg)
 
         response.success = True
         response.message = f"Depth published in {time.time() - start_time:.3f}s"

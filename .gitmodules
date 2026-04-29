@@ -10,3 +10,10 @@
 [submodule "src/ros2_shared"]
 	path = src/ros2_shared
 	url = https://github.com/ptrmu/ros2_shared.git
+[submodule "docker/ORB-SLAM3-ROS2-Docker"]
+	path = docker/ORB-SLAM3-ROS2-Docker
+	url = https://github.com/suchetanrs/ORB-SLAM3-ROS2-Docker
+[submodule "docker/gz-sim-environment"]
+	path = docker/gz-sim-environment
+	url = https://github.com/suchetanrs/gz-sim-environment
+	branch = humble

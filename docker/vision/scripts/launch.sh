@@ -10,26 +10,28 @@ source /opt/ros/humble/setup.bash
 [ -f "install/setup.bash" ] && source install/setup.bash
 
 WS="/workspace"
+DEFAULT_DELAY=0.1
+DEFAULT_LONG_DELAY=0.2
 # Η εντολή που προετοιμάζει κάθε νέο terminal panel
 GLOBAL_CMD="cd $WS && source /opt/ros/humble/setup.bash && source $WS/install/setup.bash && source $WS/.venv/bin/activate && export PYTHONPATH=\$PYTHONPATH:$WS/external"
 LAYOUT_NAME="VisionTest"
 
 # Aliases για πλοήγηση και λειτουργίες
-alias move_up="xdotool key Alt+Up && sleep 0.1"
-alias move_down="xdotool key Alt+Down && sleep 0.1"
-alias move_left="xdotool key Alt+Left && sleep 0.1"
-alias move_right="xdotool key Alt+Right && sleep 0.1"
-alias broadcast_on="xdotool key Super+g && sleep 0.2 && xdotool key shift+ctrl+a && sleep 0.1"
-alias broadcast_off="xdotool key Super+g && sleep 0.2 && xdotool key shift+ctrl+h && sleep 0.1"
+alias move_up="xdotool key Alt+Up && sleep $DEFAULT_DELAY"
+alias move_down="xdotool key Alt+Down && sleep $DEFAULT_DELAY"
+alias move_left="xdotool key Alt+Left && sleep $DEFAULT_DELAY"
+alias move_right="xdotool key Alt+Right && sleep $DEFAULT_DELAY"
+alias broadcast_on="xdotool key Super+g && sleep $DEFAULT_LONG_DELAY && xdotool key shift+ctrl+a && sleep $DEFAULT_DELAY"
+alias broadcast_off="xdotool key Super+g && sleep $DEFAULT_LONG_DELAY && xdotool key shift+ctrl+h && $DEFAULT_DELAY"
+alias enter="xdotool key Return && sleep $DEFAULT_DELAY"
 
 # Συνάρτηση για επικόλληση και εκτέλεση εντολής
 paste_cmd() {
     local text="$1"
     echo -n "$text" | xclip -selection clipboard
-    sleep 0.1
+    sleep $DEFAULT_DELAY
     xdotool key ctrl+shift+v
-    sleep 0.1
-    xdotool key Return
+    sleep $DEFAULT_DELAY
 }
 
 # 1. Εκκίνηση του Terminator με το layout
@@ -54,7 +56,7 @@ if [ -z "$WID" ]; then
 fi
 
 xdotool windowactivate $WID
-sleep 0.2
+sleep $DEFAULT_LONG_DELAY
 
 # 3. Προετοιμασία: Σιγουρεύουμε ότι είμαστε στο πάνω panel
 move_up
@@ -64,6 +66,7 @@ move_left
 echo "Enabling broadcasting for all panels..."
 broadcast_on
 paste_cmd "$GLOBAL_CMD && clear" 
+enter
 broadcast_off
 
 # --- PANEL 1 (Πάνω): Camera Input Node ---
@@ -75,6 +78,7 @@ paste_cmd 'ros2 run gscam gscam_node --ros-args \
   --remap /camera/image_raw:=/webcam/image_raw \
   --remap /camera/camera_info:=/webcam/camera_info
 '
+enter
 
 # --- PANEL 2 (Κάτω): Depth Estimation Node ---
 echo "Configuring Panel 2..."
@@ -85,12 +89,20 @@ paste_cmd "ros2 run rqt_image_view rqt_image_view"
 echo "Configuring Panel 3..."
 move_up
 move_right
-paste_cmd "ros2 run image_to_depth_generation depth_anything_v2_node --ros-args \
-  -p model_path:=/workspace/assets/checkpoints/depth_anything_v2_vits.pth \
-  -p input_topic:=/webcam/image_raw \
-  -p output_topic:=/webcam/depth_image \
-  -p service_name:=/webcam/trigger_depth
-"
+paste_cmd "ros2 launch image_to_depth_generation depth_anything.launch.py"
+enter
+
+# -- Monitoring (RViz) ---
+move_down
+move_down
+paste_cmd "ros2 launch monitoring rviz.launch.py rviz_config:=assets/rviz/monitoring.rviz"
+
+# paste_cmd "ros2 run image_to_depth_generation depth_anything_v2_node --ros-args \
+#   -p model_path:=/workspace/assets/checkpoints/depth_anything_v2_vits.pth \
+#   -p input_topic:=/webcam/image_raw \
+#   -p output_topic:=/webcam/depth_image \
+#   -p service_name:=/webcam/trigger_depth
+# "
 
 
 

@@ -1,3 +1,5 @@
+from glob import glob
+
 from setuptools import find_packages, setup
 from setuptools.command.develop import develop
 
@@ -31,6 +33,8 @@ setup(
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
         (f'lib/{package_name}', ['scripts/depth_anything_v2_node']),
+        ('share/image_to_depth_generation/launch', glob('launch/*.py')),
+
     ],
     install_requires=['setuptools'],
     zip_safe=True,
