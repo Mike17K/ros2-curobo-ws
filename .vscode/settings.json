@@ -61,8 +61,16 @@
     "**/*.pyc": true
   },
   "search.exclude": {
+    "**/build/**": true,
+    "**/install/**": true,
+    "**/log/**": true,
     "build/": true,
     "install/": true,
     "log/": true
+  },
+  "files.watcherExclude": {
+    "**/build/**": true,
+    "**/install/**": true,
+    "**/log/**": true
   }
 }

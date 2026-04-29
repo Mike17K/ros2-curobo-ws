@@ -87,4 +87,8 @@ sudo sysctl -w net.core.wmem_default=2147483647
 # xhost +local:root if not exists
 cat ~/.bashrc | grep -q "xhost +local:root" || echo "xhost +local:root" >> ~/.bashrc
 
+sudo sudo apt-get update
+sudo apt install ros-jazzy-xacro
+
+
 echo "Setup complete!"
