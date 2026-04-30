@@ -121,5 +121,7 @@ source ~/.bashrc
 
 export GZ_SIM_RESOURCE_PATH=$GZ_SIM_RESOURCE_PATH:/usr/share/gz/gz-sim8/models
 
+sudo apt update
+sudo apt install ros-jazzy-rmw-cyclonedds-cpp
 
 echo "Setup complete!"

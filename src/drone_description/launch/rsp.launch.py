@@ -13,6 +13,7 @@ def generate_launch_description():
 
     # 2. Setup the Robot State Publisher node
     node_robot_state_publisher = Node(
+        namespace="drone",
         package="robot_state_publisher",
         executable="robot_state_publisher",
         output="screen",

@@ -72,5 +72,8 @@
     "**/build/**": true,
     "**/install/**": true,
     "**/log/**": true
+  },
+  "terminal.integrated.env.linux": {
+    "GTK_PATH": null
   }
 }
