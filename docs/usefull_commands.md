@@ -11,3 +11,15 @@ camera calibration: https://docs.nav2.org/tutorials/docs/camera_calibration.html
 
 1. export PYTHONPATH=$(pwd)/.venv/lib/python3.10/site-packages:$PYTHONPATH
 2. python3 /opt/ros/humble/lib/camera_calibration/cameracalibrator --no-service-check --size 7x9 --square 0.02 -p chessboard --ros-args -r image:=/image_raw
+
+# inside the ORB container
+
+ros2 run image_proc image_proc --ros-args \
+ -r image:=/camera/color/image_raw \
+ -r camera_info:=/camera/color/camera_info
+
+and
+
+ros2 launch orb_slam3_ros2_wrapper mono.launch.py
+
+you need to change the yaml

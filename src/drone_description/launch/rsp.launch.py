@@ -20,4 +20,12 @@ def generate_launch_description():
         parameters=[{"robot_description": robot_description_raw, "use_sim_time": True}],
     )
 
-    return LaunchDescription([node_robot_state_publisher])
+    # Static world -> map transform (identity). Change as needed.
+    node_world_to_map_tf = Node(
+        package="tf2_ros",
+        executable="static_transform_publisher",
+        output="screen",
+        arguments=["0", "0", "0", "0", "0", "0", "world", "map"],
+    )
+
+    return LaunchDescription([node_robot_state_publisher, node_world_to_map_tf])
