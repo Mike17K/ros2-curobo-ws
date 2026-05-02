@@ -24,6 +24,8 @@ alias move_right="xdotool key Alt+Right && sleep $DEFAULT_DELAY"
 alias broadcast_on="xdotool key Super+g && sleep $DEFAULT_LONG_DELAY && xdotool key shift+ctrl+a && sleep $DEFAULT_DELAY"
 alias broadcast_off="xdotool key Super+g && sleep $DEFAULT_LONG_DELAY && xdotool key shift+ctrl+h && $DEFAULT_DELAY"
 alias enter="xdotool key Return && sleep $DEFAULT_DELAY"
+alias split_right="xdotool key ctrl+shift+e && sleep $DEFAULT_DELAY"
+alias split_down="xdotool key ctrl+shift+o && sleep $DEFAULT_DELAY"
 
 # Συνάρτηση για επικόλληση και εκτέλεση εντολής
 paste_cmd() {
@@ -96,6 +98,13 @@ enter
 move_down
 move_down
 paste_cmd "ros2 launch monitoring rviz.launch.py rviz_config:=assets/rviz/monitoring.rviz"
+
+# SPLIT RIGHT
+split_right
+paste_cmd "iox-roudi"
+enter
+
+
 
 # paste_cmd "ros2 run image_to_depth_generation depth_anything_v2_node --ros-args \
 #   -p model_path:=/workspace/assets/checkpoints/depth_anything_v2_vits.pth \

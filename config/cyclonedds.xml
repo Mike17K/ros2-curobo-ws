@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CycloneDDS>
+    <Domain id="any">
+        <SharedMemory>
+            <Enable>true</Enable>
+            <LogLevel>info</LogLevel>
+        </SharedMemory>
+
+        <General>
+            <AllowMulticast>true</AllowMulticast>
+        </General>
+    </Domain>
+</CycloneDDS>

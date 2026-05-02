@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<CycloneDDS xmlns="https://cdds.io" xmlns:xsi="http://w3.org" xsi:schemaLocation="https://cdds.io https://githubusercontent.com">
-    <Domain id="any">
-        <General>
-            <NetworkInterfaceAddress>enp34s0</NetworkInterfaceAddress>
-            <!-- <NetworkInterfaceAddress>eno1</NetworkInterfaceAddress> -->
-        </General>
-    </Domain>
-</CycloneDDS>

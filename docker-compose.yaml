@@ -1,4 +1,23 @@
 services:
+  # iceoryx_roudi:
+  #   image: curobo-ros2-dev-custom
+  #   container_name: iceoryx_roudi
+  #   command: iox-roudi -c /roudi_config.toml
+  #   network_mode: host
+  #   ipc: host
+  #   privileged: true
+  #   cap_add:
+  #     - IPC_LOCK
+  #   environment:
+  #     - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+  #     - CYCLONEDDS_URI=file:///cyclonedds.xml
+  #     - ROS_DOMAIN_ID=55
+  #   volumes:
+  #     - /dev/shm:/dev/shm
+  #     - ./config/cyclonedds.xml:/cyclonedds.xml:ro
+  #     - ./docker/iceoryx/config/iox_config.toml:/roudi_config.toml:ro
+  #   restart: always
+      
   depth_anything_ros2_dev:
     build:
       context: docker/vision
@@ -21,7 +40,8 @@ services:
       - BASH_ENV=/opt/ros/humble/setup.bash
       - XAUTHORITY=/tmp/.docker.xauth
       # ΠΡΟΣΘΗΚΗ ΤΩΝ ΠΑΡΑΚΑΤΩ
-      - FASTRTPS_DEFAULT_PROFILES_FILE=/workspace/fastrtps_enp34s0.xml
+      # - FASTRTPS_DEFAULT_PROFILES_FILE=/fastrtps_enp34s0.xml
+      - CYCLONEDDS_URI=file:///cyclonedds.xml
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp # TODO test the rmw_fastrtps_cpp
       - ROS_DOMAIN_ID=55
       - ROS_LOCALHOST_ONLY=0
@@ -29,9 +49,14 @@ services:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - ~/.Xauthority:/root/.Xauthority:rw # Προσθήκη
       - /tmp/.docker.xauth:/tmp/.docker.xauth:rw
+      - /tmp:/tmp:rw
       - ./docker/vision:/workspace:rw
       - ./src/shared_msgs:/workspace/src/shared_msgs:rw # Προσθήκη αυτού
       - /dev:/dev:rw
+      - /dev/shm:/dev/shm 
+      - ./config/cyclonedds.xml:/cyclonedds.xml:ro
+      # - ./config/fastrtps_enp34s0.xml:/fastrtps_enp34s0.xml:ro
+    ipc: host
     working_dir: /workspace
     stdin_open: true # αντιστοιχεί στο -i
     tty: true # αντιστοιχεί στο -t
@@ -42,3 +67,32 @@ services:
             - driver: nvidia
               count: all
               capabilities: [gpu]
+    # depends_on:
+    #   iceoryx_roudi:
+    #     condition: service_started
+
+
+  orb_slam3_22_humble_nvidia:
+    extends:
+      file: docker/ORB-SLAM3-ROS2-Docker/docker-compose.yml
+      service: orb_slam3_22_humble_nvidia
+    environment:
+      - ROS_DOMAIN_ID=55
+      - CYCLONEDDS_URI=file:///cyclonedds.xml
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp 
+    ipc: host
+    volumes:
+      - /tmp:/tmp:rw
+      - /dev/shm:/dev/shm
+      - ./config/cyclonedds.xml:/cyclonedds.xml:ro
+      - ./config/cyclonedds.xml:/root/.ros/cyclonedds.xml:ro
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    # depends_on:
+    #   iceoryx_roudi:
+    #     condition: service_started
