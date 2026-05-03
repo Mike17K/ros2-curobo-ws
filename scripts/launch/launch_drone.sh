@@ -3,10 +3,10 @@
 ROS_DOMAIN_ID=55
 ROS_DISTRO="jazzy"
 WS="/home/kaipis/Desktop/projects/robotics/ros2-curobo-ws"
-DEFAULT_DELAY=0.1
-DEFAULT_LONG_DELAY=0.2
+DEFAULT_DELAY=0.2
+DEFAULT_LONG_DELAY=0.4
 # Η εντολή που προετοιμάζει κάθε νέο terminal panel
-GLOBAL_CMD="cd $WS && source /opt/ros/$ROS_DISTRO/setup.bash && source $WS/install/setup.bash && source $WS/.venv/bin/activate && export PYTHONPATH=\$PYTHONPATH:$WS/external && export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp && export ROS_DOMAIN_ID=$ROS_DOMAIN_ID"
+GLOBAL_CMD="cd $WS && source /opt/ros/$ROS_DISTRO/setup.bash && source $WS/install/setup.bash && source $WS/.venv/bin/activate && export PYTHONPATH=\$PYTHONPATH:$WS/external && export ROS_DOMAIN_ID=$ROS_DOMAIN_ID"
 LAYOUT_NAME="VisionTest"
 TERMINATOR_CONFIG="$WS/scripts/config/drone.terminator_config"
 
@@ -34,7 +34,8 @@ enter
 # # --- PANEL 2 (Κάτω): Depth Estimation Node ---
 echo "Configuring Panel 2..."
 move_down
-paste_cmd "
+paste_cmd "ros2 launch experimentation time_sync.launch.py"
+enter
 
 # # --- PANEL 3 (Δεξιά): Depth Image View ---
 # echo "Configuring Panel 3..."

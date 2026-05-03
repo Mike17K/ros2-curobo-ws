@@ -1,6 +1,19 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
+
+    <!-- ===================== -->
+    <!-- IMU SENSOR (gz-sim)   -->
+    <!-- ===================== -->
+    <link name="camera_link" />
+
+    <joint name="camera_joint" type="fixed">
+        <parent link="base_link" />
+        <child link="camera_link" />
+        <origin xyz="0.7 0.0 1.150" rpy="0 0 0" />
+    </joint>
+
+
     <!-- ===================== -->
     <!-- IMU SENSOR (gz-sim)   -->
     <!-- ===================== -->

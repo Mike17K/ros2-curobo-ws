@@ -22,6 +22,8 @@ and
 
 ros2 launch orb_slam3_ros2_wrapper mono.launch.py
 
+ros2 launch orb_slam3_ros2_wrapper mono_imu.launch.py
+
 you need to change the yaml
 
 for micro ros client over wifi

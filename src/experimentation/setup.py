@@ -1,4 +1,5 @@
 from setuptools import find_packages, setup
+from glob import glob
 
 package_name = "experimentation"
 
@@ -9,6 +10,7 @@ setup(
     data_files=[
         ("share/ament_index/resource_index/packages", ["resource/" + package_name]),
         ("share/" + package_name, ["package.xml"]),
+        ("share/" + package_name + "/launch", glob("launch/*.launch.py")),
     ],
     install_requires=[
         "setuptools",
@@ -39,6 +41,7 @@ setup(
             "ilqr_test = experimentation.ilqr_test:main",
             "mpc_test = experimentation.mpc_test:main",
             "depth_anything_v2_test = experimentation.depth_anything_v2_test:main",
+            "time_sync_node = experimentation.time_syncronization_of_topics:main",
         ],
     },
 )

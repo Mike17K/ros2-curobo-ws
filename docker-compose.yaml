@@ -101,12 +101,17 @@ services:
 
 # docker run -it --rm -v /dev:/dev -v /dev/shm:/dev/shm --privileged --net=host microros/micro-ros-agent:$ROS_DISTRO udp4 --port 8888 -v6
   microros_agent:
-    image: microros/micro-ros-agent:humble
+    build: 
+      context: docker/microros_agent
+      dockerfile: Dockerfile
     container_name: microros_agent
-    command: udp4 --port 8888 -v6
+    command: udp4 --port 8888 -v4
     network_mode: host
     ipc: host
     privileged: true
+    ulimits:
+      memlock: -1
+      rtprio: 99
     cap_add:
       - IPC_LOCK
     environment:
@@ -117,4 +122,5 @@ services:
       - /dev:/dev:rw
       - /dev/shm:/dev/shm:rw
       - ./config/cyclonedds.xml:/cyclonedds.xml:ro
+      - ./config/cyclonedds.xml:/root/.ros/cyclonedds.xml:ro
 
