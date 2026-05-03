@@ -96,3 +96,25 @@ services:
     # depends_on:
     #   iceoryx_roudi:
     #     condition: service_started
+
+
+
+# docker run -it --rm -v /dev:/dev -v /dev/shm:/dev/shm --privileged --net=host microros/micro-ros-agent:$ROS_DISTRO udp4 --port 8888 -v6
+  microros_agent:
+    image: microros/micro-ros-agent:humble
+    container_name: microros_agent
+    command: udp4 --port 8888 -v6
+    network_mode: host
+    ipc: host
+    privileged: true
+    cap_add:
+      - IPC_LOCK
+    environment:
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      - CYCLONEDDS_URI=file:///cyclonedds.xml
+      - ROS_DOMAIN_ID=55
+    volumes:
+      - /dev:/dev:rw
+      - /dev/shm:/dev/shm:rw
+      - ./config/cyclonedds.xml:/cyclonedds.xml:ro
+

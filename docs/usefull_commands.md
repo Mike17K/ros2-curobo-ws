@@ -23,3 +23,6 @@ and
 ros2 launch orb_slam3_ros2_wrapper mono.launch.py
 
 you need to change the yaml
+
+for micro ros client over wifi
+docker run -it --rm -v /dev:/dev -v /dev/shm:/dev/shm --privileged --net=host microros/micro-ros-agent:$ROS_DISTRO udp4 --port 8888 -v6
