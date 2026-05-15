@@ -1,10 +1,9 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org" name="drone">
 
-    <xacro:include filename="inertial.xacro" />
-    <xacro:include filename="core.xacro" />
-    <xacro:include filename="sensors.xacro" />
-    <xacro:include filename="ardupilot_plugin.xacro" />
+    <xacro:include filename="components/shapes.xacro" />
+    <xacro:include filename="components/rotor.xacro" />
+    <!-- <xacro:include filename="ardupilot_plugin.xacro" /> -->
 
     <link name="base_footprint" />
     <joint name="base_joint" type="fixed">
@@ -30,10 +29,11 @@
         </xacro:inertial_box>
     </link>
 
-    <xacro:rotor suffix="0" x="0.15" y="0.15" />
-    <xacro:rotor suffix="1" x="-0.15" y="-0.15" />
-    <xacro:rotor suffix="2" x="0.15" y="-0.15" />
-    <xacro:rotor suffix="3" x="-0.15" y="0.15" />
+    <xacro:rotor suffix="0" x="0.15" y="0.15" ccw="1" />  <!-- Front Left -->
+    <xacro:rotor suffix="1" x="-0.15" y="-0.15" ccw="1" />  <!-- Rear Right -->
+    <xacro:rotor suffix="2" x="0.15" y="-0.15" ccw="-1" /> <!-- Front Right -->
+    <xacro:rotor suffix="3" x="-0.15" y="0.15" ccw="-1" /> <!-- Rear Left -->
 
+    <xacro:include filename="sensors.xacro" />
 
-</robot>
+</robot>    

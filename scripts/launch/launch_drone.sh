@@ -34,8 +34,20 @@ enter
 # # --- PANEL 2 (Κάτω): Depth Estimation Node ---
 echo "Configuring Panel 2..."
 move_down
-paste_cmd "ros2 launch experimentation time_sync.launch.py"
+paste_cmd "ros2 run joint_state_publisher_gui joint_state_publisher_gui --ros-args -r __ns:=/drone"
 enter
+
+move_up
+move_right
+split_vertical
+move_left
+paste_cmd "ros2 run tf2_ros static_transform_publisher 1.0 0.0 2.0 0.0 0.0 0.0 1.0 map base_footprint"
+enter
+
+move_down
+paste_cmd "ros2 run rviz2 rviz2 --ros-args -p description_topic:=/drone/robot_description"
+
+
 
 # # --- PANEL 3 (Δεξιά): Depth Image View ---
 # echo "Configuring Panel 3..."

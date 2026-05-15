@@ -16,6 +16,7 @@ install(
     description  # Ή όπως αλλιώς λες τον φάκελο με τα xacro σου
     config       # Αν έχεις αρχεία παραμέτρων .yaml
     meshes       # Αν έχεις αρχεία .stl ή .dae για το drone
+    description/components  # Αν έχεις αρχεία xacro για τα επιμέρους μέρη
   DESTINATION share/${PROJECT_NAME}
 )
 # --------------------------------
