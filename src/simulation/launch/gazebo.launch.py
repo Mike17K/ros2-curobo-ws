@@ -6,7 +6,7 @@ from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, TextSubstitution
 from launch_ros.actions import Node
-
+from launch.conditions import IfCondition
 
 def generate_launch_description():
     simulation_pkg_description = get_package_share_directory('simulation')
@@ -16,6 +16,12 @@ def generate_launch_description():
         'world',
         default_value=PathJoinSubstitution([simulation_pkg_description, 'worlds', 'drone_world.sdf']),
         description='Gazebo world file to load',
+    )
+
+    spawn_arg = DeclareLaunchArgument(
+        'spawn_drone',
+        default_value='true',
+        description='Whether to spawn the drone in Gazebo',
     )
 
     gazebo = IncludeLaunchDescription(
@@ -31,7 +37,8 @@ def generate_launch_description():
     spawn_drone = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(simulation_pkg_description, 'launch', 'spawn_drone.launch.py')
-        )
+        ),
+        condition=IfCondition(LaunchConfiguration('spawn_drone'))
     )
 
     get_package_share_directory('ros_gz_bridge')
@@ -44,5 +51,5 @@ def generate_launch_description():
         arguments=['--ros-args', '-p', f'config_file:={bridge_params}'],
     )
 
-    nodes = [world_arg, gazebo, spawn_drone, ros_gz_bridge]
+    nodes = [world_arg, spawn_arg, gazebo, spawn_drone, ros_gz_bridge]
     return LaunchDescription(nodes)
