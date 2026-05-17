@@ -39,8 +39,16 @@
     <gazebo>
         <plugin filename="gz-sim-joint-state-publisher-system"
             name="gz::sim::systems::JointStatePublisher">
-            <!-- Optional: topic name defaults to /joint_states if omitted -->
             <topic>/drone/joint_states</topic>
+        </plugin>
+
+        <!-- <plugin
+            filename="gz-sim-physics-system"
+            name="gz::sim::systems::Physics">
+        </plugin> -->
+        <plugin
+            filename="gz-sim-scene-broadcaster-system"
+            name="gz::sim::systems::SceneBroadcaster">
         </plugin>
     </gazebo>
 

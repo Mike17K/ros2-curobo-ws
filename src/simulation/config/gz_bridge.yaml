@@ -1,35 +1,36 @@
+# Clock
 - ros_topic_name: "clock"
   gz_topic_name: "clock"
   ros_type_name: "rosgraph_msgs/msg/Clock"
   gz_type_name: "gz.msgs.Clock"
   direction: GZ_TO_ROS
-
-- ros_topic_name: "/drone/imu"
-  gz_topic_name: "/drone/imu"
-  ros_type_name: "sensor_msgs/msg/Imu"
-  gz_type_name: "gz.msgs.IMU"
-  direction: GZ_TO_ROS
-
-- ros_topic_name: "/drone/navsat"
-  gz_topic_name: "/drone/navsat"
-  ros_type_name: "sensor_msgs/msg/NavSatFix"
-  gz_type_name: "gz.msgs.NavSat"
-  direction: GZ_TO_ROS
-
-- ros_topic_name: "/drone/command/motor_speed"
-  gz_topic_name: "/drone/command/motor_speed"
-  ros_type_name: "actuator_msgs/msg/Actuators"
-  gz_type_name: "gz.msgs.Actuators"
-  direction: ROS_TO_GZ
-
+# Camera image
 - ros_topic_name: "/camera/image_raw"
-  gz_topic_name: "/camera/image_raw"
+  gz_topic_name: "camera/image_raw"
   ros_type_name: "sensor_msgs/msg/Image"
   gz_type_name: "gz.msgs.Image"
   direction: GZ_TO_ROS
-
+# Camera info
+- ros_topic_name: "/camera/camera_info"
+  gz_topic_name: "camera/camera_info"
+  ros_type_name: "sensor_msgs/msg/CameraInfo"
+  gz_type_name: "gz.msgs.CameraInfo"
+  direction: GZ_TO_ROS
+# IMU
+- ros_topic_name: "/drone/imu"
+  gz_topic_name: "imu"
+  ros_type_name: "sensor_msgs/msg/Imu"
+  gz_type_name: "gz.msgs.IMU"
+  direction: GZ_TO_ROS
+# Joint states
 - ros_topic_name: "/drone/joint_states"
   gz_topic_name: "/drone/joint_states"
   ros_type_name: "sensor_msgs/msg/JointState"
   gz_type_name: "gz.msgs.Model"
   direction: GZ_TO_ROS
+# Motor command (to Gazebo)
+- ros_topic_name: "/drone/command/motor_speed"
+  gz_topic_name: "command/motor_speed"
+  ros_type_name: "actuator_msgs/msg/Actuators"
+  gz_type_name: "gz.msgs.Actuators"
+  direction: ROS_TO_GZ
