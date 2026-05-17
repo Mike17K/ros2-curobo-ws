@@ -22,12 +22,20 @@ def generate_launch_description():
     robot_desc = {'robot_description': robot_description_config.toxml()}
 
     # 4. Node: Robot State Publisher (Processes URDF and streams TFs)
+        # 4. Node: Robot State Publisher (Processes URDF and streams TFs)
     robot_state_publisher = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
         output='screen',
         namespace=LaunchConfiguration('namespace'),
-        parameters=[robot_desc, {'use_sim_time': True}]
+        parameters=[
+            robot_desc, 
+            {'use_sim_time': True}
+        ],
+        # Explicit remapping ensures it grabs the correct bridged topic
+        remappings=[
+            ('/joint_states', '/drone/joint_states')
+        ]
     )
 
     # 5. Node: Spawn the drone entity into an already running Gazebo Sim

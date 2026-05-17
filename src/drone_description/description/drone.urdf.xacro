@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<robot xmlns:xacro="http://ros.org" name="drone">
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="drone">
 
     <xacro:include filename="components/shapes.xacro" />
     <xacro:include filename="components/rotor.xacro" />
@@ -35,5 +35,13 @@
     <xacro:rotor suffix="3" x="-0.15" y="0.15" ccw="-1" /> <!-- Rear Left -->
 
     <xacro:include filename="sensors.xacro" />
+
+    <gazebo>
+        <plugin filename="gz-sim-joint-state-publisher-system"
+            name="gz::sim::systems::JointStatePublisher">
+            <!-- Optional: topic name defaults to /joint_states if omitted -->
+            <topic>/drone/joint_states</topic>
+        </plugin>
+    </gazebo>
 
 </robot>    

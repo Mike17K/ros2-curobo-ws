@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<robot xmlns:xacro="http://ros.org">
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
     <xacro:include filename="shapes.xacro" />
 
     <!-- Added 'ccw' parameter: use 1 for counter-clockwise, -1 for clockwise -->
@@ -25,45 +25,38 @@
             </xacro:inertial_cylinder>
         </link>
 
-        <!-- Gazebo Plugins Configuration -->
-        <gazebo reference="rotor_${suffix}">
-
-            <!-- 1. Motor Model Plugin: Spins the joint based on input commands -->
+        <gazebo>
             <plugin filename="gz-sim-multicopter-motor-model-system"
                 name="gz::sim::systems::MulticopterMotorModel">
+
                 <jointName>rotor_${suffix}_joint</jointName>
                 <linkName>rotor_${suffix}</linkName>
+
                 <turningDirection>${'ccw' if ccw==1 else 'cw'}</turningDirection>
+
                 <timeConstantUp>0.0125</timeConstantUp>
                 <timeConstantDown>0.025</timeConstantDown>
-                <maxRotVelocity>800</maxRotVelocity>
-                <motorConstant>8.54858e-06</motorConstant>
+
+                <maxRotVelocity>1000</maxRotVelocity>
+
+                <motorConstant>1.269e-05</motorConstant>
                 <momentConstant>0.016</momentConstant>
+
                 <commandSubTopic>command/motor_speed</commandSubTopic>
+
                 <motorNumber>${suffix}</motorNumber>
+                <actuator_number>${suffix}</actuator_number>
+
+                <motorSpeedPubTopic>motor_speed/${suffix}</motorSpeedPubTopic>
+
                 <rotorDragCoefficient>8.06428e-05</rotorDragCoefficient>
                 <rollingMomentCoefficient>1e-06</rollingMomentCoefficient>
+
                 <rotorVelocitySlowdownSim>10</rotorVelocitySlowdownSim>
-            </plugin>
 
-            <!-- 2. Lift & Drag Plugin: Creates upward aerodynamic force from rotation -->
-            <plugin filename="gz-sim-lift-drag-system" name="gz::sim::systems::LiftDrag">
-                <a0>0.1</a0>
-                <cla>0.1</cla>
-                <cda>0.01</cda>
-                <cma>0.0</cma>
-                <alpha_stall>0.33</alpha_stall>
-                <cla_stall>-0.2</cla_stall>
-                <cda_stall>1.0</cda_stall>
-                <cma_stall>0.0</cma_stall>
-                <cp>0 0 0</cp>
-                <area>0.01</area>
-                <air_density>1.225</air_density>
-                <forward>0 1 0</forward>
-                <upward>0 0 1</upward>
-                <link_name>rotor_${suffix}</link_name>
+                <motorType>velocity</motorType>
             </plugin>
-
         </gazebo>
+
     </xacro:macro>
 </robot>

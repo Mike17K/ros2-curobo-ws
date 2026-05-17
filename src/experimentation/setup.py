@@ -42,6 +42,7 @@ setup(
             "mpc_test = experimentation.mpc_test:main",
             "depth_anything_v2_test = experimentation.depth_anything_v2_test:main",
             "time_sync_node = experimentation.time_syncronization_of_topics:main",
+            "drone_teleop = experimentation.drone_teleop:main",
         ],
     },
 )

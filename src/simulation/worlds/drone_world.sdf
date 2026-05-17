@@ -13,15 +13,53 @@
       <background>0.699999988 0.699999988 0.699999988 1</background>
       <shadows>true</shadows>
     </scene>
-    <include>
-      <uri>file:///home/kaipis/.gz/fuel/fuel.gazebosim.org/mjcarroll/models/banana for scale/3</uri>
-      <name>Banana for Scale</name>
-      <pose>-5.3083981225917283 -2.1854509636157036 0 0 0 0</pose>
-    </include>
-    <include>
-      <uri>file:///home/kaipis/.gz/fuel/fuel.gazebosim.org/openrobotics/models/forklift/1</uri>
-      <name>Forklift</name>
-      <pose>-5.160059928894043 4.1632900238037118 0 0 0 2.400849709535632</pose>
-    </include>
+    <model name='my_custom_ground_plane'>
+      <static>true</static>
+      <link name='link'>
+        <collision name='collision'>
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>100 100</size>
+            </plane>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>100 100</size>
+            </plane>
+          </geometry>
+          <material>
+            <ambient>0.5 0.5 0.5 1</ambient>
+            <diffuse>0.5 0.5 0.5 1</diffuse>
+          </material>
+        </visual>
+        <pose>0 0 0 0 0 0</pose>
+        <inertial>
+          <pose>0 0 0 0 0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>0 0 0 0 0 0</pose>
+      <self_collide>false</self_collide>
+    </model>
   </world>
 </sdf>

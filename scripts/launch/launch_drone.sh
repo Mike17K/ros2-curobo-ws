@@ -28,25 +28,21 @@ broadcast_off
 
 # --- PANEL 1 (Πάνω): Camera Input Node ---
 echo "Configuring Panel 1..."
-paste_cmd 'ros2 launch drone_description rsp.launch.py'
-enter
+paste_cmd 'ros2 launch simulation gazebo.launch.py'
+# enter
 
-# # --- PANEL 2 (Κάτω): Depth Estimation Node ---
-echo "Configuring Panel 2..."
-move_down
-paste_cmd "ros2 run joint_state_publisher_gui joint_state_publisher_gui --ros-args -r __ns:=/drone"
-enter
-
-move_up
 move_right
 split_vertical
 move_left
 paste_cmd "ros2 run tf2_ros static_transform_publisher 1.0 0.0 2.0 0.0 0.0 0.0 1.0 map base_footprint"
-enter
+# enter
 
 move_down
 paste_cmd "ros2 run rviz2 rviz2 --ros-args -p description_topic:=/drone/robot_description"
 
+move_left
+paste_cmd 'ros2 topic pub /drone/command/motor_speed actuator_msgs/msg/Actuators "{velocity: [500.0, 500.0, 500.0, 500.0]}"'
+# enter
 
 
 # # --- PANEL 3 (Δεξιά): Depth Image View ---
