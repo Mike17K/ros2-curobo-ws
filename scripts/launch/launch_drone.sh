@@ -35,6 +35,8 @@ move_right
 split_vertical
 move_left
 paste_cmd "ros2 run tf2_ros static_transform_publisher 1.0 0.0 2.0 0.0 0.0 0.0 1.0 map base_footprint"
+move_right
+paste_cmd "ros2 launch vision_processor depth_to_pointcloud.launch.py"
 # enter
 
 move_down
