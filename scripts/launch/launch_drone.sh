@@ -28,15 +28,19 @@ broadcast_off
 
 # --- PANEL 1 (Πάνω): Camera Input Node ---
 echo "Configuring Panel 1..."
+# export ogre_flags="--use-software-renderer"
+# export GZ_RENDERING_BACKEND=ogre2
+# export LIBGL_ALWAYS_SOFTWARE=1
+# ros2 launch simulation gazebo.launch.py
 paste_cmd 'ros2 launch simulation gazebo.launch.py'
 # enter
+
 
 move_right
 split_vertical
 move_left
 paste_cmd "ros2 run tf2_ros static_transform_publisher 1.0 0.0 2.0 0.0 0.0 0.0 1.0 map base_footprint"
 move_right
-paste_cmd "ros2 launch vision_processor depth_to_pointcloud.launch.py"
 # enter
 
 move_down

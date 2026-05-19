@@ -1,6 +1,8 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="drone">
 
+    <xacro:property name="robot_namespace" value="drone" />
+
     <xacro:include filename="components/shapes.xacro" />
     <xacro:include filename="components/rotor.xacro" />
     <!-- <xacro:include filename="ardupilot_plugin.xacro" /> -->
@@ -39,13 +41,9 @@
     <gazebo>
         <plugin filename="gz-sim-joint-state-publisher-system"
             name="gz::sim::systems::JointStatePublisher">
-            <topic>/drone/joint_states</topic>
+            <topic>/${robot_namespace}/joint_states</topic>
         </plugin>
 
-        <!-- <plugin
-            filename="gz-sim-physics-system"
-            name="gz::sim::systems::Physics">
-        </plugin> -->
         <plugin
             filename="gz-sim-scene-broadcaster-system"
             name="gz::sim::systems::SceneBroadcaster">

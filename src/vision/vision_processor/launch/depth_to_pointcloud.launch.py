@@ -12,17 +12,17 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument(
             'depth_image_topic',
-            default_value='/camera/depth/image_raw',
+            default_value='/drone/camera/depth/image_raw',
             description='Depth image topic to convert into PointCloud2',
         ),
         DeclareLaunchArgument(
             'camera_info_topic',
-            default_value='/camera/depth/camera_info',
+            default_value='/drone/camera/depth/camera_info',
             description='Camera info topic for the depth camera',
         ),
         DeclareLaunchArgument(
             'pointcloud_topic',
-            default_value='/camera/depth/points',
+            default_value='/drone/camera/depth/points',
             description='Output PointCloud2 topic',
         ),
         Node(

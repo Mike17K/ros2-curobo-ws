@@ -23,76 +23,42 @@
         </collision>
     </link>
 
-    <!-- RGB camera for color image -->
+    <joint name="camera_joint" type="fixed">
+        <parent link="base_link" />
+        <child link="camera_link" />
+        <origin xyz="0.2 0 0.0" rpy="0 0 0" />
+    </joint>
+
     <gazebo reference="camera_link">
-        <sensor name="rgb_camera" type="camera">
-            <always_on>true</always_on>
-            <visualize>true</visualize>
+        <!-- Αλλαγή του type σε rgbd_camera -->
+        <sensor name="drone_rgbd_camera" type="rgbd_camera">
+            <always_on>1</always_on>
             <update_rate>30</update_rate>
-            <topic>camera/image_raw</topic>
-            <camera name="intel_realsense_rgb">
-                <optical_frame_id>camera_rgb_optical_frame</optical_frame_id>
-                <camera_info_topic>camera/camera_info</camera_info_topic>
-                <horizontal_fov>1.05</horizontal_fov>
-                <pose>0 0 0 0 0 0</pose>
+            <visualize>true</visualize>
+            <topic>/${robot_namespace}/camera/rgbd</topic>
+
+            <camera>
+                <optical_frame_id>camera_rgbd_optical_frame</optical_frame_id>
+
+                <horizontal_fov>1.047</horizontal_fov>
                 <image>
                     <width>640</width>
                     <height>480</height>
                     <format>R8G8B8</format>
                 </image>
                 <clip>
-                    <near>0.1</near>
+                    <near>0.05</near>
                     <far>10.0</far>
                 </clip>
             </camera>
         </sensor>
     </gazebo>
 
-    <link name="camera_rgb_optical_frame" />
-    <joint name="camera_rgb_optical_frame_joint" type="fixed">
+    <link name="camera_rgbd_optical_frame" />
+    <joint name="camera_rgbd_optical_frame_joint" type="fixed">
         <parent link="camera_link" />
-        <child link="camera_rgb_optical_frame" />
-        <origin xyz="0 0 0" rpy="-1.57079632679 0 -1.57079632679" />
-    </joint>
-
-    <!-- Depth camera implemented as a Gazebo Sim depth_camera sensor (publishes depth image;
-    Sensors
-    system will provide pointcloud) -->
-    <gazebo reference="camera_link">
-        <sensor name="depth_camera" type="depth_camera">
-            <always_on>true</always_on>
-            <visualize>true</visualize>
-            <update_rate>30</update_rate>
-            <topic>camera/depth/image_raw</topic>
-            <camera name="intel_realsense_depth">
-                <optical_frame_id>camera_depth_optical_frame</optical_frame_id>
-                <camera_info_topic>camera/depth/camera_info</camera_info_topic>
-                <horizontal_fov>1.05</horizontal_fov>
-                <pose>0 0 0 0 0 0</pose>
-                <image>
-                    <width>640</width>
-                    <height>480</height>
-                    <format>R_FLOAT32</format>
-                </image>
-                <clip>
-                    <near>0.1</near>
-                    <far>10.0</far>
-                </clip>
-            </camera>
-        </sensor>
-    </gazebo>
-
-    <link name="camera_depth_optical_frame" />
-    <joint name="camera_depth_optical_frame_joint" type="fixed">
-        <parent link="camera_link" />
-        <child link="camera_depth_optical_frame" />
-        <origin xyz="0 0 0" rpy="-1.57079632679 0 -1.57079632679" />
-    </joint>
-
-    <joint name="camera_joint" type="fixed">
-        <parent link="base_link" />
-        <child link="camera_link" />
-        <origin xyz="0.2 0 0.0" rpy="0 0 0" />
+        <child link="camera_rgbd_optical_frame" />
+        <origin xyz="0 0 0" rpy="0 0 0" />
     </joint>
 
 
@@ -119,12 +85,17 @@
         </collision>
     </link>
 
+    <!-- TODO this imu topic is not working -->
     <gazebo reference="imu_link">
         <sensor name="imu_sensor" type="imu">
             <always_on>1</always_on>
             <update_rate>1</update_rate>
             <visualize>true</visualize>
-            <topic>imu</topic>
+            <topic>/${robot_namespace}/imu</topic>
+
+            <plugin filename="gz-sim-imu-system"
+                name="gz::sim::systems::Imu">
+            </plugin>
         </sensor>
     </gazebo>
 

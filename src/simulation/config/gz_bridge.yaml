@@ -4,27 +4,21 @@
   ros_type_name: "rosgraph_msgs/msg/Clock"
   gz_type_name: "gz.msgs.Clock"
   direction: GZ_TO_ROS
-# Depth image
-- ros_topic_name: "/camera/depth/image_raw"
-  gz_topic_name: "camera/depth/image_raw"
+# RGBD pointcloud
+- ros_topic_name: "/drone/camera/rgbd/points"
+  gz_topic_name: "/drone/camera/rgbd/points"
+  ros_type_name: "sensor_msgs/msg/PointCloud2"
+  gz_type_name: "gz.msgs.PointCloudPacked"
+  direction: GZ_TO_ROS
+# RGBD image raw
+- ros_topic_name: "/drone/camera/rgbd/image_raw"
+  gz_topic_name: "/drone/camera/rgbd/image_raw"
   ros_type_name: "sensor_msgs/msg/Image"
   gz_type_name: "gz.msgs.Image"
   direction: GZ_TO_ROS
-# Depth camera info
-- ros_topic_name: "/camera/depth/camera_info"
-  gz_topic_name: "camera/depth/camera_info"
-  ros_type_name: "sensor_msgs/msg/CameraInfo"
-  gz_type_name: "gz.msgs.CameraInfo"
-  direction: GZ_TO_ROS
-# RGB image
-- ros_topic_name: "/camera/image_raw"
-  gz_topic_name: "camera/image_raw"
-  ros_type_name: "sensor_msgs/msg/Image"
-  gz_type_name: "gz.msgs.Image"
-  direction: GZ_TO_ROS
-# RGB camera info
-- ros_topic_name: "/camera/camera_info"
-  gz_topic_name: "camera/camera_info"
+# RGBD camera info
+- ros_topic_name: "/drone/camera/rgbd/camera_info"
+  gz_topic_name: "/drone/camera/rgbd/camera_info"
   ros_type_name: "sensor_msgs/msg/CameraInfo"
   gz_type_name: "gz.msgs.CameraInfo"
   direction: GZ_TO_ROS
@@ -42,7 +36,7 @@
   direction: GZ_TO_ROS
 # Motor command (to Gazebo)
 - ros_topic_name: "/drone/command/motor_speed"
-  gz_topic_name: "command/motor_speed"
+  gz_topic_name: "/drone/command/motor_speed"
   ros_type_name: "actuator_msgs/msg/Actuators"
   gz_type_name: "gz.msgs.Actuators"
   direction: ROS_TO_GZ

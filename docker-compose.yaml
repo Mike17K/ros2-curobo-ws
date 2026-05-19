@@ -1,22 +1,22 @@
 services:
-  # iceoryx_roudi:
-  #   image: curobo-ros2-dev-custom
-  #   container_name: iceoryx_roudi
-  #   command: iox-roudi -c /roudi_config.toml
-  #   network_mode: host
-  #   ipc: host
-  #   privileged: true
-  #   cap_add:
-  #     - IPC_LOCK
-  #   environment:
-  #     - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-  #     - CYCLONEDDS_URI=file:///cyclonedds.xml
-  #     - ROS_DOMAIN_ID=55
-  #   volumes:
-  #     - /dev/shm:/dev/shm
-  #     - ./config/cyclonedds.xml:/cyclonedds.xml:ro
-  #     - ./docker/iceoryx/config/iox_config.toml:/roudi_config.toml:ro
-  #   restart: always
+  iceoryx_roudi:
+    image: curobo-ros2-dev-custom
+    container_name: iceoryx_roudi
+    command: iox-roudi -c /roudi_config.toml
+    network_mode: host
+    ipc: host
+    privileged: true
+    cap_add:
+      - IPC_LOCK
+    environment:
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      - CYCLONEDDS_URI=file:///cyclonedds.xml
+      - ROS_DOMAIN_ID=55
+    volumes:
+      - /dev/shm:/dev/shm
+      - ./config/cyclonedds.xml:/cyclonedds.xml:ro
+      - ./docker/iceoryx/config/iox_config.toml:/roudi_config.toml:ro
+    restart: always
       
   depth_anything_ros2_dev:
     build:

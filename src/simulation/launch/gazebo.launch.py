@@ -2,7 +2,7 @@ import os
 
 from ament_index_python.packages import get_package_share_directory, PackageNotFoundError
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, TextSubstitution
 from launch_ros.actions import Node
@@ -38,6 +38,7 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(
             os.path.join(simulation_pkg_description, 'launch', 'spawn_drone.launch.py')
         ),
+        launch_arguments={'namespace': "drone"}.items(),
         condition=IfCondition(LaunchConfiguration('spawn_drone'))
     )
 
