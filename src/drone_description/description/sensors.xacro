@@ -85,7 +85,6 @@
         </collision>
     </link>
 
-    <!-- TODO this imu topic is not working -->
     <gazebo reference="imu_link">
         <sensor name="imu_sensor" type="imu">
             <always_on>1</always_on>

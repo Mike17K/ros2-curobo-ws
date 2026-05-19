@@ -38,6 +38,7 @@ paste_cmd 'ros2 launch simulation gazebo.launch.py'
 
 move_right
 split_vertical
+paste_cmd 'ros2 launch drone_control joy_gui.launch.py'
 move_left
 paste_cmd "ros2 run tf2_ros static_transform_publisher 1.0 0.0 2.0 0.0 0.0 0.0 1.0 map base_footprint"
 move_right
@@ -47,7 +48,7 @@ move_down
 paste_cmd "ros2 run rviz2 rviz2 --ros-args -p description_topic:=/drone/robot_description"
 
 move_left
-paste_cmd 'ros2 topic pub /drone/command/motor_speed actuator_msgs/msg/Actuators "{velocity: [500.0, 500.0, 500.0, 500.0]}"'
+paste_cmd 'ros2 launch drone_control drone_controller.launch.py'
 # enter
 
 
