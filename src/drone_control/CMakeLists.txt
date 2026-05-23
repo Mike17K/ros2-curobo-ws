@@ -16,6 +16,9 @@ find_package(sensor_msgs REQUIRED)
 
 add_executable(drone_controller
   src/drone_controller.cpp
+  src/utils.cpp
+  src/rate_pid.cpp
+  src/mixer.cpp
 )
 
 ament_target_dependencies(drone_controller
@@ -39,6 +42,10 @@ install(TARGETS drone_controller
 )
 
 install(DIRECTORY launch
+  DESTINATION share/${PROJECT_NAME}
+)
+
+install(DIRECTORY config
   DESTINATION share/${PROJECT_NAME}
 )
 

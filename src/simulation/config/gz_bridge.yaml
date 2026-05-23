@@ -28,6 +28,12 @@
   ros_type_name: "sensor_msgs/msg/Imu"
   gz_type_name: "gz.msgs.IMU"
   direction: GZ_TO_ROS
+# Real pose from Gazebo odometry publisher
+- ros_topic_name: "/drone/odometry"
+  gz_topic_name: "/model/drone/odometry_with_covariance"
+  ros_type_name: "nav_msgs/msg/Odometry"
+  gz_type_name: "gz.msgs.OdometryWithCovariance"
+  direction: GZ_TO_ROS
 # Joint states
 - ros_topic_name: "/drone/joint_states"
   gz_topic_name: "/drone/joint_states"

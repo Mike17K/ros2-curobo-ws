@@ -52,7 +52,8 @@
                 <rotorDragCoefficient>8.06428e-05</rotorDragCoefficient>
                 <rollingMomentCoefficient>1e-06</rollingMomentCoefficient>
 
-                <rotorVelocitySlowdownSim>10</rotorVelocitySlowdownSim>
+                <!-- set to 1 for direct rotor velocity simulation (less artificial slowdown) -->
+                <rotorVelocitySlowdownSim>1</rotorVelocitySlowdownSim>
 
                 <motorType>velocity</motorType>
             </plugin>

@@ -31,10 +31,10 @@
         </xacro:inertial_box>
     </link>
 
-    <xacro:rotor suffix="0" x="0.15" y="0.15" ccw="1" />  <!-- Front Left -->
-    <xacro:rotor suffix="1" x="-0.15" y="-0.15" ccw="1" />  <!-- Rear Right -->
-    <xacro:rotor suffix="2" x="0.15" y="-0.15" ccw="-1" /> <!-- Front Right -->
-    <xacro:rotor suffix="3" x="-0.15" y="0.15" ccw="-1" /> <!-- Rear Left -->
+    <xacro:rotor suffix="0" x="0.15" y="0.15" ccw="-1" />  <!-- Front Left -->
+    <xacro:rotor suffix="1" x="-0.15" y="-0.15" ccw="-1" />  <!-- Rear Right -->
+    <xacro:rotor suffix="2" x="0.15" y="-0.15" ccw="1" /> <!-- Front Right -->
+    <xacro:rotor suffix="3" x="-0.15" y="0.15" ccw="1" /> <!-- Rear Left -->
 
     <xacro:include filename="sensors.xacro" />
 
