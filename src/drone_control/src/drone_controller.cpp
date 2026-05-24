@@ -10,6 +10,7 @@
 
 #include "actuator_msgs/msg/actuators.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "nav_msgs/msg/odometry.hpp"
 #include "sensor_msgs/msg/imu.hpp"
 #include "sensor_msgs/msg/joy.hpp"
 #include "rcl_interfaces/msg/set_parameters_result.hpp"
@@ -17,16 +18,25 @@
 #include "drone_control/utils.hpp"
 #include "drone_control/rate_pid.hpp"
 #include "drone_control/mixer.hpp"
+#include "drone_control/srv/set_position_target.hpp"
+#include "drone_control/srv/set_control_mode.hpp"
 
 constexpr double kPi = 3.14159265358979323846;
 
 class DroneController : public rclcpp::Node
 {
 public:
+  enum class ControlMode : std::uint8_t
+  {
+    MANUAL_ATTITUDE = 0,
+    POSITION_HOLD = 1,
+  };
+
   explicit DroneController(const rclcpp::NodeOptions & options = rclcpp::NodeOptions())
   : Node("drone_controller", options)
   {
     imu_topic_ = declare_parameter<std::string>("imu_topic", "/drone/imu");
+    odom_topic_ = declare_parameter<std::string>("odom_topic", "/drone/odometry");
     joy_topic_ = declare_parameter<std::string>("joy_topic", "joy");
     motor_topic_ = declare_parameter<std::string>("motor_topic", "/drone/command/motor_speed");
 
@@ -41,6 +51,8 @@ public:
     axis_pitch_ = declare_parameter<int>("axis_pitch", 1);
     axis_yaw_ = declare_parameter<int>("axis_yaw", 2);
     axis_throttle_ = declare_parameter<int>("axis_throttle", 3);
+    mode_toggle_button_ = declare_parameter<int>("mode_toggle_button", 6);
+    mode_reset_button_ = declare_parameter<int>("mode_reset_button", 7);
 
     // tuned inertia consistent with drone_description geometry (~0.017 kg*m^2)
     inertia_ = declare_parameter<double>("attitude_inertia", 0.017);  // kg*m^2 (approx)
@@ -51,6 +63,16 @@ public:
     throttle_trim_range_ = declare_parameter<double>("throttle_trim_range", 80.0);
     throttle_deadzone_ = declare_parameter<double>("throttle_deadzone", 0.08);
     attitude_inertia_z_ = declare_parameter<double>("attitude_inertia_z", inertia_);
+    position_target_step_xy_m_ = declare_parameter<double>("position_target_step_xy_m", 0.10);
+    position_target_step_z_m_ = declare_parameter<double>("position_target_step_z_m", 0.05);
+    position_target_step_yaw_deg_ = declare_parameter<double>("position_target_step_yaw_deg", 10.0);
+    position_xy_gain_ = declare_parameter<double>("position_xy_gain", 0.35);
+    max_position_tilt_deg_ = declare_parameter<double>("max_position_tilt_deg", max_attitude_deg_);
+    altitude_Kp_ = declare_parameter<double>("altitude_Kp", 120.0);
+    altitude_Ki_ = declare_parameter<double>("altitude_Ki", 0.0);
+    altitude_Kd_ = declare_parameter<double>("altitude_Kd", 0.0);
+    altitude_integral_limit_ = declare_parameter<double>("altitude_integral_limit", 200.0);
+    altitude_integral_leak_rate_ = declare_parameter<double>("altitude_integral_leak_rate", 0.5);
 
     // Geometric controller gains (SO(3))
     K_R_attitude_ = declare_parameter<double>("K_R_attitude", 8.0); // attitude gain (roll/pitch)
@@ -73,6 +95,11 @@ public:
     rate_pid_roll_.set_integral_limits(rate_integral_limit_, rate_integral_leak_rate_);
     rate_pid_pitch_.set_integral_limits(rate_integral_limit_, rate_integral_leak_rate_);
     rate_pid_yaw_.set_integral_limits(rate_integral_limit_, rate_integral_leak_rate_);
+    altitude_pid_.set_gains(altitude_Kp_, altitude_Ki_, altitude_Kd_);
+    altitude_pid_.set_integral_limits(altitude_integral_limit_, altitude_integral_leak_rate_);
+
+    control_mode_ = ControlMode::MANUAL_ATTITUDE;
+    position_target_initialized_ = false;
 
     // Allow runtime tuning: update gains when relevant parameters change
     on_set_parameters_callback_handle_ = this->add_on_set_parameters_callback(
@@ -88,6 +115,16 @@ public:
           else if (name == "throttle_trim_range") throttle_trim_range_ = p.as_double();
           else if (name == "throttle_deadzone") throttle_deadzone_ = p.as_double();
           else if (name == "max_yaw_rate_deg") max_yaw_rate_deg_ = p.as_double();
+          else if (name == "position_target_step_xy_m") position_target_step_xy_m_ = p.as_double();
+          else if (name == "position_target_step_z_m") position_target_step_z_m_ = p.as_double();
+          else if (name == "position_target_step_yaw_deg") position_target_step_yaw_deg_ = p.as_double();
+          else if (name == "position_xy_gain") position_xy_gain_ = p.as_double();
+          else if (name == "max_position_tilt_deg") max_position_tilt_deg_ = p.as_double();
+          else if (name == "altitude_Kp") altitude_Kp_ = p.as_double();
+          else if (name == "altitude_Ki") altitude_Ki_ = p.as_double();
+          else if (name == "altitude_Kd") altitude_Kd_ = p.as_double();
+          else if (name == "altitude_integral_limit") altitude_integral_limit_ = p.as_double();
+          else if (name == "altitude_integral_leak_rate") altitude_integral_leak_rate_ = p.as_double();
           if (name == "K_R_attitude") K_R_attitude_ = p.as_double();
           else if (name == "K_R_yaw") K_R_yaw_ = p.as_double();
           else if (name == "attitude_inertia_z") attitude_inertia_z_ = p.as_double();
@@ -107,9 +144,12 @@ public:
         rate_pid_roll_.set_integral_limits(rate_integral_limit_, rate_integral_leak_rate_);
         rate_pid_pitch_.set_integral_limits(rate_integral_limit_, rate_integral_leak_rate_);
         rate_pid_yaw_.set_integral_limits(rate_integral_limit_, rate_integral_leak_rate_);
+        altitude_pid_.set_gains(altitude_Kp_, altitude_Ki_, altitude_Kd_);
+        altitude_pid_.set_integral_limits(altitude_integral_limit_, altitude_integral_leak_rate_);
         rate_pid_roll_.reset();
         rate_pid_pitch_.reset();
         rate_pid_yaw_.reset();
+        altitude_pid_.reset();
         return result;
       });
 
@@ -124,15 +164,34 @@ public:
       joy_topic_, 10,
       std::bind(&DroneController::joy_callback, this, std::placeholders::_1));
 
+    odom_subscription_ = create_subscription<nav_msgs::msg::Odometry>(
+      odom_topic_, 10,
+      std::bind(&DroneController::odom_callback, this, std::placeholders::_1));
+
     motor_publisher_ = create_publisher<actuator_msgs::msg::Actuators>(motor_topic_, 10);
+    position_target_service_ = create_service<drone_control::srv::SetPositionTarget>(
+      "set_position_target",
+      std::bind(
+        &DroneController::handle_set_position_target_service,
+        this,
+        std::placeholders::_1,
+        std::placeholders::_2));
+    control_mode_service_ = create_service<drone_control::srv::SetControlMode>(
+      "set_control_mode",
+      std::bind(
+        &DroneController::handle_set_control_mode_service,
+        this,
+        std::placeholders::_1,
+        std::placeholders::_2));
     timer_ = create_wall_timer(
       std::chrono::duration<double>(timer_period_sec),
       std::bind(&DroneController::publish_command, this));
 
     RCLCPP_INFO(
       get_logger(),
-      "Controller ready: imu=%s joy=%s motor=%s motors=%d",
-      imu_topic_.c_str(), joy_topic_.c_str(), motor_topic_.c_str(), motor_count_);
+        "Controller ready: imu=%s odom=%s joy=%s motor=%s motors=%d mode=%s",
+        imu_topic_.c_str(), odom_topic_.c_str(), joy_topic_.c_str(), motor_topic_.c_str(), motor_count_,
+        control_mode_name(control_mode_).c_str());
   }
 
   void stop()
@@ -156,9 +215,20 @@ private:
 
   void joy_callback(const sensor_msgs::msg::Joy::SharedPtr msg)
   {
+    previous_joy_buttons_ = last_joy_buttons_;
     last_joy_axes_.assign(msg->axes.begin(), msg->axes.end());
     last_joy_buttons_.assign(msg->buttons.begin(), msg->buttons.end());
     last_joy_time_ = now();
+  }
+
+  void odom_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
+  {
+    last_odom_ = *msg;
+    have_odom_ = true;
+
+    if (control_mode_ == ControlMode::POSITION_HOLD && !position_target_initialized_) {
+      initialize_position_target_from_current_state();
+    }
   }
 
   double joy_axis(int index) const
@@ -177,6 +247,138 @@ private:
     return last_joy_buttons_[static_cast<std::size_t>(index)];
   }
 
+  bool button_rising_edge(int index) const
+  {
+    if (index < 0 || index >= static_cast<int>(last_joy_buttons_.size())) {
+      return false;
+    }
+    if (index >= static_cast<int>(previous_joy_buttons_.size())) {
+      return false;
+    }
+    return last_joy_buttons_[static_cast<std::size_t>(index)] != 0 &&
+      previous_joy_buttons_[static_cast<std::size_t>(index)] == 0;
+  }
+
+  static double wrap_angle(double angle)
+  {
+    while (angle > kPi) {
+      angle -= 2.0 * kPi;
+    }
+    while (angle < -kPi) {
+      angle += 2.0 * kPi;
+    }
+    return angle;
+  }
+
+  std::string control_mode_name(ControlMode mode) const
+  {
+    switch (mode) {
+      case ControlMode::MANUAL_ATTITUDE:
+        return "manual_attitude";
+      case ControlMode::POSITION_HOLD:
+        return "position_hold";
+    }
+    return "unknown";
+  }
+
+  void initialize_position_target_from_current_state()
+  {
+    if (!have_odom_ || !have_imu_) {
+      position_target_initialized_ = false;
+      return;
+    }
+
+    const auto euler = drone_control::quaternion_to_euler(
+      last_imu_[0], last_imu_[1], last_imu_[2], last_imu_[3]);
+
+    position_target_[0] = last_odom_.pose.pose.position.x;
+    position_target_[1] = last_odom_.pose.pose.position.y;
+    position_target_[2] = last_odom_.pose.pose.position.z;
+    position_target_yaw_rad_ = euler[2];
+    position_target_initialized_ = true;
+    altitude_pid_.reset();
+  }
+
+  void update_position_targets_from_joystick(double dt)
+  {
+    if (control_mode_ != ControlMode::POSITION_HOLD) {
+      return;
+    }
+
+    position_target_[0] += joy_axis(axis_pitch_) * position_target_step_xy_m_ * dt;
+    position_target_[1] += joy_axis(axis_roll_) * position_target_step_xy_m_ * dt;
+    position_target_yaw_rad_ = wrap_angle(
+      position_target_yaw_rad_ +
+      joy_axis(axis_yaw_) * (position_target_step_yaw_deg_ * kPi / 180.0) * dt);
+  }
+
+  void handle_set_control_mode_service(
+    const std::shared_ptr<drone_control::srv::SetControlMode::Request> request,
+    std::shared_ptr<drone_control::srv::SetControlMode::Response> response)
+  {
+    const auto mode = static_cast<ControlMode>(request->mode);
+    if (request->mode != static_cast<std::uint8_t>(ControlMode::MANUAL_ATTITUDE) &&
+      request->mode != static_cast<std::uint8_t>(ControlMode::POSITION_HOLD))
+    {
+      response->success = false;
+      response->message = "invalid control mode";
+      return;
+    }
+
+    control_mode_ = mode;
+    if (control_mode_ == ControlMode::POSITION_HOLD) {
+      position_target_initialized_ = false;
+      altitude_pid_.reset();
+      if (have_odom_ && have_imu_) {
+        initialize_position_target_from_current_state();
+      }
+    }
+
+    response->success = true;
+    response->message = "control mode set to " + control_mode_name(control_mode_);
+  }
+
+  void handle_set_position_target_service(
+    const std::shared_ptr<drone_control::srv::SetPositionTarget::Request> request,
+    std::shared_ptr<drone_control::srv::SetPositionTarget::Response> response)
+  {
+    position_target_[0] = request->x;
+    position_target_[1] = request->y;
+    position_target_[2] = request->z;
+    position_target_yaw_rad_ = wrap_angle(request->yaw_deg * kPi / 180.0);
+    position_target_initialized_ = true;
+    altitude_pid_.reset();
+
+    response->success = true;
+    response->message = "position target set";
+    RCLCPP_INFO(
+      get_logger(),
+      "Position target set to x=%.3f y=%.3f z=%.3f yaw=%.1f deg",
+      position_target_[0], position_target_[1], position_target_[2], request->yaw_deg);
+  }
+
+  void update_control_mode_from_joystick()
+  {
+    if (button_rising_edge(mode_toggle_button_)) {
+      if (control_mode_ == ControlMode::MANUAL_ATTITUDE) {
+        control_mode_ = ControlMode::POSITION_HOLD;
+        position_target_initialized_ = false;
+        altitude_pid_.reset();
+        if (have_odom_ && have_imu_) {
+          initialize_position_target_from_current_state();
+        }
+      } else {
+        control_mode_ = ControlMode::MANUAL_ATTITUDE;
+      }
+      RCLCPP_INFO(get_logger(), "Control mode changed to %s", control_mode_name(control_mode_).c_str());
+    }
+
+    if (control_mode_ == ControlMode::POSITION_HOLD && button_rising_edge(mode_reset_button_)) {
+      initialize_position_target_from_current_state();
+      RCLCPP_INFO(get_logger(), "Position target reset to current state");
+    }
+  }
+
   void publish_zero_command(const char * reason)
   {
     RCLCPP_DEBUG(get_logger(), "Zeroing motors: %s", reason);
@@ -187,6 +389,8 @@ private:
 
   void publish_command()
   {
+    update_control_mode_from_joystick();
+
     const rclcpp::Duration joy_timeout = rclcpp::Duration::from_seconds(joy_timeout_sec_);
     if ((now() - last_joy_time_) > joy_timeout) {
       publish_zero_command("joy timeout");
@@ -211,6 +415,77 @@ private:
     double base_speed = hover_motor_speed_ + throttle_trim;
     base_speed = drone_control::clamp_value(base_speed, min_motor_speed_, max_motor_speed_);
 
+    double desired_roll = roll_axis * (max_attitude_deg_ * kPi / 180.0);
+    double desired_pitch = pitch_axis * (max_attitude_deg_ * kPi / 180.0);
+    double desired_yaw_rate = yaw_axis * (max_yaw_rate_deg_ * kPi / 180.0);
+
+    if (control_mode_ == ControlMode::POSITION_HOLD) {
+      if (!have_odom_ || !have_imu_) {
+        if (!position_target_initialized_) {
+          position_target_initialized_ = false;
+        }
+        RCLCPP_WARN_THROTTLE(
+          get_logger(),
+          *get_clock(),
+          2000,
+          "position hold waiting for odom/imu; using hover fallback");
+        base_speed = hover_motor_speed_;
+      }
+
+      if (have_odom_ && have_imu_ && !position_target_initialized_) {
+        initialize_position_target_from_current_state();
+      }
+
+      if (have_odom_ && have_imu_) {
+        update_position_targets_from_joystick(control_dt_);
+
+        const auto euler = drone_control::quaternion_to_euler(
+          last_imu_[0], last_imu_[1], last_imu_[2], last_imu_[3]);
+        const double current_yaw = euler[2];
+        const double current_x = last_odom_.pose.pose.position.x;
+        const double current_y = last_odom_.pose.pose.position.y;
+        const double current_z = last_odom_.pose.pose.position.z;
+
+        const double error_x = position_target_[0] - current_x;
+        const double error_y = position_target_[1] - current_y;
+        const double error_z = position_target_[2] - current_z;
+
+        const double cy = std::cos(current_yaw);
+        const double sy = std::sin(current_yaw);
+        const double forward_error = cy * error_x + sy * error_y;
+        const double right_error = -sy * error_x + cy * error_y;
+
+        const double max_position_tilt_rad = max_position_tilt_deg_ * kPi / 180.0;
+        desired_pitch = drone_control::clamp_value(
+          position_xy_gain_ * forward_error,
+          -max_position_tilt_rad,
+          max_position_tilt_rad);
+        desired_roll = drone_control::clamp_value(
+          -position_xy_gain_ * right_error,
+          -max_position_tilt_rad,
+          max_position_tilt_rad);
+
+        const double throttle_trim_position = drone_control::clamp_value(
+          altitude_pid_.update(error_z, control_dt_),
+          min_motor_speed_ - hover_motor_speed_,
+          max_motor_speed_ - hover_motor_speed_);
+        base_speed = drone_control::clamp_value(
+          hover_motor_speed_ + throttle_trim_position,
+          min_motor_speed_,
+          max_motor_speed_);
+
+        const double yaw_error = wrap_angle(position_target_yaw_rad_ - current_yaw);
+        desired_yaw_rate = drone_control::clamp_value(
+          K_R_yaw_ * yaw_error,
+          -max_yaw_rate_deg_ * kPi / 180.0,
+          max_yaw_rate_deg_ * kPi / 180.0);
+
+        // In position-hold, altitude is controlled from odometry, so the manual throttle axis
+        // is not used as direct thrust input.
+        throttle_command = 0.0;
+      }
+    }
+
     // Attitude control (roll and pitch)
     double roll_delta = 0.0;
     double pitch_delta = 0.0;
@@ -219,8 +494,6 @@ private:
       const auto euler = drone_control::quaternion_to_euler(
         last_imu_[0], last_imu_[1], last_imu_[2], last_imu_[3]);
 
-      const double desired_roll = roll_axis * (max_attitude_deg_ * kPi / 180.0);
-      const double desired_pitch = pitch_axis * (max_attitude_deg_ * kPi / 180.0);
       const double roll_rate = last_gyro_[0];
       const double pitch_rate = last_gyro_[1];
 
@@ -249,8 +522,6 @@ private:
       std::array<double,3> omega_des{};
       omega_des[0] = K_R_attitude_ * eR[0];
       omega_des[1] = K_R_attitude_ * eR[1];
-      // For yaw, joystick commands map to a desired angular velocity (rad/s)
-      const double desired_yaw_rate = yaw_axis * (max_yaw_rate_deg_ * kPi / 180.0);
       omega_des[2] = desired_yaw_rate;
 
       // Inertia and Coriolis-like cross term
@@ -300,6 +571,7 @@ private:
   }
 
   std::string imu_topic_;
+  std::string odom_topic_;
   std::string joy_topic_;
   std::string motor_topic_;
 
@@ -314,10 +586,14 @@ private:
   int axis_pitch_ {1};
   int axis_yaw_ {2};
   int axis_throttle_ {3};
+  int mode_toggle_button_ {6};
+  int mode_reset_button_ {7};
   // IMU state
   std::array<double, 4> last_imu_ {};
   std::array<double, 3> last_gyro_ {};
   bool have_imu_ {false};
+  nav_msgs::msg::Odometry last_odom_ {};
+  bool have_odom_ {false};
   // inertia
   double inertia_ {0.02};
   double torque_to_speed_gain_ {0.5};
@@ -339,18 +615,37 @@ private:
   double rate_integral_limit_ {1.5};
   double rate_integral_leak_rate_ {0.5};
   double max_yaw_rate_deg_ {90.0};
+  double position_target_step_xy_m_ {0.10};
+  double position_target_step_z_m_ {0.05};
+  double position_target_step_yaw_deg_ {10.0};
+  double position_xy_gain_ {0.35};
+  double max_position_tilt_deg_ {15.0};
+  double altitude_Kp_ {120.0};
+  double altitude_Ki_ {0.0};
+  double altitude_Kd_ {0.0};
+  double altitude_integral_limit_ {200.0};
+  double altitude_integral_leak_rate_ {0.5};
   drone_control::RatePID rate_pid_roll_;
   drone_control::RatePID rate_pid_pitch_;
   drone_control::RatePID rate_pid_yaw_;
+  drone_control::RatePID altitude_pid_;
   double control_dt_ {0.02};
+  ControlMode control_mode_ {ControlMode::MANUAL_ATTITUDE};
+  std::array<double, 3> position_target_ {0.0, 0.0, 0.0};
+  double position_target_yaw_rad_ {0.0};
+  bool position_target_initialized_ {false};
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr on_set_parameters_callback_handle_ {nullptr};
   std::vector<float> last_joy_axes_;
+  std::vector<std::int32_t> previous_joy_buttons_;
   std::vector<std::int32_t> last_joy_buttons_;
   rclcpp::Time last_joy_time_ {0, 0, RCL_ROS_TIME};
   bool warned_non_quad_ {false};
 
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_subscription_;
   rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr joy_subscription_;
+  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_subscription_;
+  rclcpp::Service<drone_control::srv::SetPositionTarget>::SharedPtr position_target_service_;
+  rclcpp::Service<drone_control::srv::SetControlMode>::SharedPtr control_mode_service_;
   rclcpp::Publisher<actuator_msgs::msg::Actuators>::SharedPtr motor_publisher_;
   rclcpp::TimerBase::SharedPtr timer_;
 };

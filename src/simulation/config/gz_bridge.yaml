@@ -46,3 +46,15 @@
   ros_type_name: "actuator_msgs/msg/Actuators"
   gz_type_name: "gz.msgs.Actuators"
   direction: ROS_TO_GZ
+# Odometry
+- ros_topic_name: "/drone/odometry"
+  gz_topic_name: "/drone/odometry"
+  ros_type_name: "nav_msgs/msg/Odometry"
+  gz_type_name: "gz.msgs.Odometry"
+  direction: GZ_TO_ROS
+# TF (for visualization)
+- ros_topic_name: "/tf"
+  gz_topic_name: "/tf"
+  ros_type_name: "tf2_msgs/msg/TFMessage"
+  gz_type_name: "gz.msgs.TFMessage"
+  direction: GZ_TO_ROS

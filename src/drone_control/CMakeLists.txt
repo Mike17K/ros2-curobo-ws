@@ -11,8 +11,15 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(actuator_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
+
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "srv/SetPositionTarget.srv"
+  "srv/SetControlMode.srv"
+)
 
 add_executable(drone_controller
   src/drone_controller.cpp
@@ -23,9 +30,13 @@ add_executable(drone_controller
 
 ament_target_dependencies(drone_controller
   actuator_msgs
+  nav_msgs
   rclcpp
   sensor_msgs
 )
+
+rosidl_target_interfaces(drone_controller
+  ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 target_include_directories(drone_controller PRIVATE
   include
@@ -48,6 +59,8 @@ install(DIRECTORY launch
 install(DIRECTORY config
   DESTINATION share/${PROJECT_NAME}
 )
+
+ament_export_dependencies(rosidl_default_runtime)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
