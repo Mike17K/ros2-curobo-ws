@@ -34,7 +34,8 @@ def generate_launch_description():
             namespace=robot_namespace,
             parameters=[
                 robot_desc,
-                {'use_sim_time': True}
+                {'use_sim_time': True},
+                { 'frame_prefix': f'/{robot_namespace}/' },
             ],
             remappings=[
                 ('/joint_states', f'/{robot_namespace}/joint_states')
@@ -55,7 +56,10 @@ def generate_launch_description():
             ]
         )
 
-        return [robot_state_publisher, spawn_drone]
+        return [
+            robot_state_publisher, 
+            spawn_drone,
+        ]
 
     return LaunchDescription([
         ns_arg,

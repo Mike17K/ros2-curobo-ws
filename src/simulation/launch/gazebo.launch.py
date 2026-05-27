@@ -52,5 +52,10 @@ def generate_launch_description():
         arguments=['--ros-args', '-p', f'config_file:={bridge_params}'],
     )
 
-    nodes = [world_arg, spawn_arg, gazebo, spawn_drone, ros_gz_bridge]
-    return LaunchDescription(nodes)
+    return LaunchDescription([
+        world_arg, 
+        spawn_arg, 
+        gazebo, 
+        spawn_drone, 
+        ros_gz_bridge,
+    ])

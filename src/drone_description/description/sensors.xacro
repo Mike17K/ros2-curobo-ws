@@ -38,7 +38,7 @@
             <topic>/${robot_namespace}/camera/rgbd</topic>
 
             <camera>
-                <optical_frame_id>camera_rgbd_optical_frame</optical_frame_id>
+                <optical_frame_id>/${robot_namespace}/camera_rgbd_optical_frame</optical_frame_id>
 
                 <horizontal_fov>1.047</horizontal_fov>
                 <image>
