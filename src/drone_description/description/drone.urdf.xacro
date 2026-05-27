@@ -58,19 +58,10 @@
             <odom_topic>/${robot_namespace}/odometry</odom_topic>
             <tf_topic>/${robot_namespace}/tf</tf_topic>
             <gaussian_noise>0.01</gaussian_noise>
-            <odom_frame>world</odom_frame>
+            <odom_frame>${robot_namespace}/odom</odom_frame>
+            <robot_base_frame>${robot_namespace}/base_footprint</robot_base_frame>
         </plugin>
 
-        <plugin
-            filename="gz-sim-pose-publisher-system"
-            name="gz::sim::systems::PosePublisher">
-            <publish_link_pose>true</publish_link_pose>
-            <publish_sensor_pose>true</publish_sensor_pose>
-            <publish_collision_pose>false</publish_collision_pose>
-            <publish_visual_pose>false</publish_visual_pose>
-            <publish_nested_models>true</publish_nested_models>
-            <use_pose_vector_msg>true</use_pose_vector_msg>
-        </plugin>
 
     </gazebo>
 
