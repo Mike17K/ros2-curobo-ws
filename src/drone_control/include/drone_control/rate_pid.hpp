@@ -7,6 +7,7 @@ public:
   RatePID();
   void set_gains(double kp, double ki, double kd);
   void set_integral_limits(double limit, double leak_rate);
+  void set_integral(double integral);
   void reset();
   double update(double error, double dt);
 private:

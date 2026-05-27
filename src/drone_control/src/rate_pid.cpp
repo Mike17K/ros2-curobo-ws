@@ -17,6 +17,8 @@ void RatePID::set_integral_limits(double limit, double leak_rate){
   integral_leak_rate_ = std::max(0.0, leak_rate);
 }
 
+void RatePID::set_integral(double integral){ integral_ = integral; }
+
 void RatePID::reset(){ integral_ = 0.0; prev_error_ = 0.0; }
 
 double RatePID::update(double error, double dt){

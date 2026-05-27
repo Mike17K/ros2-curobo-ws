@@ -3,8 +3,8 @@
 ROS_DOMAIN_ID=55
 ROS_DISTRO="jazzy"
 WS="/home/kaipis/Desktop/projects/robotics/ros2-curobo-ws"
-DEFAULT_DELAY=0.2
-DEFAULT_LONG_DELAY=0.4
+DEFAULT_DELAY=0.05
+DEFAULT_LONG_DELAY=0.2
 # Η εντολή που προετοιμάζει κάθε νέο terminal panel
 GLOBAL_CMD="cd $WS && source /opt/ros/$ROS_DISTRO/setup.bash && source $WS/install/setup.bash && source $WS/.venv/bin/activate && export PYTHONPATH=\$PYTHONPATH:$WS/external && export ROS_DOMAIN_ID=$ROS_DOMAIN_ID"
 LAYOUT_NAME="VisionTest"

@@ -14,6 +14,7 @@ find_package(actuator_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
@@ -33,6 +34,7 @@ ament_target_dependencies(drone_controller
   nav_msgs
   rclcpp
   sensor_msgs
+  std_msgs
 )
 
 rosidl_target_interfaces(drone_controller

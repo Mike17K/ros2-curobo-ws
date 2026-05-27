@@ -13,6 +13,7 @@
 #include "nav_msgs/msg/odometry.hpp"
 #include "sensor_msgs/msg/imu.hpp"
 #include "sensor_msgs/msg/joy.hpp"
+#include "std_msgs/msg/string.hpp"
 #include "rcl_interfaces/msg/set_parameters_result.hpp"
 
 #include "drone_control/utils.hpp"
@@ -39,6 +40,8 @@ public:
     odom_topic_ = declare_parameter<std::string>("odom_topic", "/drone/odometry");
     joy_topic_ = declare_parameter<std::string>("joy_topic", "joy");
     motor_topic_ = declare_parameter<std::string>("motor_topic", "/drone/command/motor_speed");
+    position_target_topic_ = declare_parameter<std::string>("position_target_topic", "/drone/position_target");
+    control_mode_topic_ = declare_parameter<std::string>("control_mode_topic", "/drone/control_mode");
 
     publish_rate_hz_ = declare_parameter<double>("publish_rate_hz", 50.0);
     motor_count_ = declare_parameter<int>("motor_count", 4);
@@ -71,8 +74,8 @@ public:
     altitude_Kp_ = declare_parameter<double>("altitude_Kp", 120.0);
     altitude_Ki_ = declare_parameter<double>("altitude_Ki", 0.0);
     altitude_Kd_ = declare_parameter<double>("altitude_Kd", 0.0);
-    altitude_integral_limit_ = declare_parameter<double>("altitude_integral_limit", 200.0);
-    altitude_integral_leak_rate_ = declare_parameter<double>("altitude_integral_leak_rate", 0.5);
+    altitude_integral_limit_ = declare_parameter<double>("altitude_integral_limit", 2000.0);
+    altitude_integral_leak_rate_ = declare_parameter<double>("altitude_integral_leak_rate", 1.0);
 
     // Geometric controller gains (SO(3))
     K_R_attitude_ = declare_parameter<double>("K_R_attitude", 8.0); // attitude gain (roll/pitch)
@@ -169,6 +172,8 @@ public:
       std::bind(&DroneController::odom_callback, this, std::placeholders::_1));
 
     motor_publisher_ = create_publisher<actuator_msgs::msg::Actuators>(motor_topic_, 10);
+    position_target_publisher_ = create_publisher<nav_msgs::msg::Odometry>(position_target_topic_, 10);
+    control_mode_publisher_ = create_publisher<std_msgs::msg::String>(control_mode_topic_, 10);
     position_target_service_ = create_service<drone_control::srv::SetPositionTarget>(
       "set_position_target",
       std::bind(
@@ -281,6 +286,13 @@ private:
     return "unknown";
   }
 
+  void publish_control_mode_state()
+  {
+    std_msgs::msg::String mode_message;
+    mode_message.data = control_mode_name(control_mode_);
+    control_mode_publisher_->publish(mode_message);
+  }
+
   void initialize_position_target_from_current_state()
   {
     if (!have_odom_ || !have_imu_) {
@@ -296,7 +308,27 @@ private:
     position_target_[2] = last_odom_.pose.pose.position.z;
     position_target_yaw_rad_ = euler[2];
     position_target_initialized_ = true;
-    altitude_pid_.reset();
+  }
+
+  double current_throttle_trim() const
+  {
+    double throttle_command = joy_axis(axis_throttle_);
+    if (std::fabs(throttle_command) < throttle_deadzone_) {
+      throttle_command = 0.0;
+    }
+    return drone_control::clamp_value(throttle_command, -1.0, 1.0) * throttle_trim_range_;
+  }
+
+  void begin_position_hold_mode()
+  {
+    position_target_initialized_ = false;
+    position_hold_throttle_bias_ = current_throttle_trim();
+    if (altitude_Ki_ > 0.0) {
+      altitude_pid_.set_integral(position_hold_throttle_bias_ / altitude_Ki_);
+    }
+    if (have_odom_ && have_imu_) {
+      initialize_position_target_from_current_state();
+    }
   }
 
   void update_position_targets_from_joystick(double dt)
@@ -327,12 +359,9 @@ private:
 
     control_mode_ = mode;
     if (control_mode_ == ControlMode::POSITION_HOLD) {
-      position_target_initialized_ = false;
-      altitude_pid_.reset();
-      if (have_odom_ && have_imu_) {
-        initialize_position_target_from_current_state();
-      }
+      begin_position_hold_mode();
     }
+    publish_control_mode_state();
 
     response->success = true;
     response->message = "control mode set to " + control_mode_name(control_mode_);
@@ -347,7 +376,6 @@ private:
     position_target_[2] = request->z;
     position_target_yaw_rad_ = wrap_angle(request->yaw_deg * kPi / 180.0);
     position_target_initialized_ = true;
-    altitude_pid_.reset();
 
     response->success = true;
     response->message = "position target set";
@@ -362,14 +390,11 @@ private:
     if (button_rising_edge(mode_toggle_button_)) {
       if (control_mode_ == ControlMode::MANUAL_ATTITUDE) {
         control_mode_ = ControlMode::POSITION_HOLD;
-        position_target_initialized_ = false;
-        altitude_pid_.reset();
-        if (have_odom_ && have_imu_) {
-          initialize_position_target_from_current_state();
-        }
+        begin_position_hold_mode();
       } else {
         control_mode_ = ControlMode::MANUAL_ATTITUDE;
       }
+      publish_control_mode_state();
       RCLCPP_INFO(get_logger(), "Control mode changed to %s", control_mode_name(control_mode_).c_str());
     }
 
@@ -387,9 +412,33 @@ private:
     motor_publisher_->publish(command);
   }
 
+  void publish_position_target_command()
+  {
+    if (!position_target_initialized_) {
+      return;
+    }
+
+    nav_msgs::msg::Odometry target;
+    target.header.stamp = now();
+    target.header.frame_id = odom_topic_;
+    target.child_frame_id = "position_target";
+    target.pose.pose.position.x = position_target_[0];
+    target.pose.pose.position.y = position_target_[1];
+    target.pose.pose.position.z = position_target_[2];
+
+    const double half_yaw = 0.5 * position_target_yaw_rad_;
+    target.pose.pose.orientation.x = 0.0;
+    target.pose.pose.orientation.y = 0.0;
+    target.pose.pose.orientation.z = std::sin(half_yaw);
+    target.pose.pose.orientation.w = std::cos(half_yaw);
+
+    position_target_publisher_->publish(target);
+  }
+
   void publish_command()
   {
     update_control_mode_from_joystick();
+    publish_control_mode_state();
 
     const rclcpp::Duration joy_timeout = rclcpp::Duration::from_seconds(joy_timeout_sec_);
     if ((now() - last_joy_time_) > joy_timeout) {
@@ -402,16 +451,11 @@ private:
       return;
     }
 
-    const double throttle_axis = joy_axis(axis_throttle_);
     const double roll_axis = joy_axis(axis_roll_);
     const double pitch_axis = joy_axis(axis_pitch_);
     const double yaw_axis = joy_axis(axis_yaw_);
 
-    double throttle_command = throttle_axis;
-    if (std::fabs(throttle_command) < throttle_deadzone_) {
-      throttle_command = 0.0;
-    }
-    const double throttle_trim = drone_control::clamp_value(throttle_command, -1.0, 1.0) * throttle_trim_range_;
+    const double throttle_trim = current_throttle_trim();
     double base_speed = hover_motor_speed_ + throttle_trim;
     base_speed = drone_control::clamp_value(base_speed, min_motor_speed_, max_motor_speed_);
 
@@ -421,15 +465,15 @@ private:
 
     if (control_mode_ == ControlMode::POSITION_HOLD) {
       if (!have_odom_ || !have_imu_) {
-        if (!position_target_initialized_) {
-          position_target_initialized_ = false;
-        }
         RCLCPP_WARN_THROTTLE(
           get_logger(),
           *get_clock(),
           2000,
           "position hold waiting for odom/imu; using hover fallback");
-        base_speed = hover_motor_speed_;
+        base_speed = drone_control::clamp_value(
+          hover_motor_speed_ + position_hold_throttle_bias_,
+          min_motor_speed_,
+          max_motor_speed_);
       }
 
       if (have_odom_ && have_imu_ && !position_target_initialized_) {
@@ -480,9 +524,7 @@ private:
           -max_yaw_rate_deg_ * kPi / 180.0,
           max_yaw_rate_deg_ * kPi / 180.0);
 
-        // In position-hold, altitude is controlled from odometry, so the manual throttle axis
-        // is not used as direct thrust input.
-        throttle_command = 0.0;
+        publish_position_target_command();
       }
     }
 
@@ -574,6 +616,8 @@ private:
   std::string odom_topic_;
   std::string joy_topic_;
   std::string motor_topic_;
+  std::string position_target_topic_;
+  std::string control_mode_topic_;
 
   double publish_rate_hz_ {50.0};
   int motor_count_ {4};
@@ -625,6 +669,7 @@ private:
   double altitude_Kd_ {0.0};
   double altitude_integral_limit_ {200.0};
   double altitude_integral_leak_rate_ {0.5};
+  double position_hold_throttle_bias_ {0.0};
   drone_control::RatePID rate_pid_roll_;
   drone_control::RatePID rate_pid_pitch_;
   drone_control::RatePID rate_pid_yaw_;
@@ -647,6 +692,8 @@ private:
   rclcpp::Service<drone_control::srv::SetPositionTarget>::SharedPtr position_target_service_;
   rclcpp::Service<drone_control::srv::SetControlMode>::SharedPtr control_mode_service_;
   rclcpp::Publisher<actuator_msgs::msg::Actuators>::SharedPtr motor_publisher_;
+  rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr position_target_publisher_;
+  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr control_mode_publisher_;
   rclcpp::TimerBase::SharedPtr timer_;
 };
 

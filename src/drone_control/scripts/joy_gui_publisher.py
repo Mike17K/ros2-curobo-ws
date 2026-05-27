@@ -3,10 +3,13 @@
 import tkinter as tk
 from tkinter import ttk
 import importlib
+import math
 from typing import Optional
 
 import rclpy
+from nav_msgs.msg import Odometry
 from rclpy.node import Node
+from std_msgs.msg import String
 from sensor_msgs.msg import Joy
 
 class JoyGuiPublisher(Node):
@@ -14,34 +17,48 @@ class JoyGuiPublisher(Node):
         super().__init__('joy_gui_publisher')
 
         self.declare_parameter('joy_topic', '/joy')
+        self.declare_parameter('odom_topic', '/drone/odometry')
+        self.declare_parameter('position_target_topic', '/drone/position_target')
+        self.declare_parameter('control_mode_topic', '/drone/control_mode')
         self.declare_parameter('publish_rate_hz', 20.0)
         self.declare_parameter('control_mode_service', '/drone/set_control_mode')
         self.declare_parameter('position_target_service', '/drone/set_position_target')
-        self.declare_parameter('mode_toggle_button', 6)
-        self.declare_parameter('mode_reset_button', 7)
-        self.declare_parameter('target_step_xy_m', 0.10)
-        self.declare_parameter('target_step_z_m', 0.05)
-        self.declare_parameter('target_step_yaw_deg', 10.0)
 
         self._joy_topic = self.get_parameter('joy_topic').value or '/joy'
+        self._odom_topic = self.get_parameter('odom_topic').value or '/drone/odometry'
+        self._position_target_topic = self.get_parameter('position_target_topic').value or '/drone/position_target'
+        self._control_mode_topic = self.get_parameter('control_mode_topic').value or '/drone/control_mode'
         self._publish_rate_hz = float(self.get_parameter('publish_rate_hz').value or 20.0)
         self._publish_period_ms = max(20, int(1000.0 / self._publish_rate_hz))
         self._control_mode_service = self.get_parameter('control_mode_service').value or '/drone/set_control_mode'
         self._position_target_service = self.get_parameter('position_target_service').value or '/drone/set_position_target'
-        self._mode_toggle_button = int(self.get_parameter('mode_toggle_button').value or 6)
-        self._mode_reset_button = int(self.get_parameter('mode_reset_button').value or 7)
-        self._target_step_xy_m = float(self.get_parameter('target_step_xy_m').value or 0.10)
-        self._target_step_z_m = float(self.get_parameter('target_step_z_m').value or 0.05)
-        self._target_step_yaw_deg = float(self.get_parameter('target_step_yaw_deg').value or 10.0)
 
         self._publisher = self.create_publisher(Joy, self._joy_topic, 10)
         self._control_mode_client = None
         self._position_target_client = None
+        self._odom_subscription = self.create_subscription(
+            Odometry,
+            self._odom_topic,
+            self._odom_callback,
+            10,
+        )
+        self._target_subscription = self.create_subscription(
+            Odometry,
+            self._position_target_topic,
+            self._target_callback,
+            10,
+        )
+        self._mode_subscription = self.create_subscription(
+            String,
+            self._control_mode_topic,
+            self._control_mode_callback,
+            10,
+        )
 
         self._window = tk.Tk()
         self._window.title('Drone Control')
-        self._window.geometry('760x640')
-        self._window.minsize(720, 600)
+        self._window.geometry('780x560')
+        self._window.minsize(720, 520)
         self._window.protocol('WM_DELETE_WINDOW', self._on_close)
         self._window.configure(bg='#0f172a')
 
@@ -51,22 +68,37 @@ class JoyGuiPublisher(Node):
         self._throttle = tk.DoubleVar(value=-1.0)
         self._deadman = tk.IntVar(value=1)
         self._deadman_state = tk.StringVar(value='ON')
+        self._mode_value = 0
         self._mode_label = tk.StringVar(value='manual_attitude')
         self._status = tk.StringVar(value='Ready')
         self._service_state = tk.StringVar(value='Services: connecting...')
-        self._target_state = tk.StringVar(value='Target: x=0.00 y=0.00 z=0.00 yaw=0.0°')
-        self._target_x = tk.StringVar(value='0.00')
-        self._target_y = tk.StringVar(value='0.00')
-        self._target_z = tk.StringVar(value='0.00')
-        self._target_yaw_deg = tk.StringVar(value='0.0')
-        self._pulse_mode_toggle = False
-        self._pulse_mode_reset = False
+        self._pose_state = tk.StringVar(value='Position: waiting for odometry...')
+        self._orientation_state = tk.StringVar(value='Orientation: waiting for odometry...')
+        self._target_state = tk.StringVar(value='Target: waiting for hold target...')
+        self._target_note = tk.StringVar(value='Target editing is enabled in position hold mode.')
+        self._target_x_text = tk.StringVar(value='0.00')
+        self._target_y_text = tk.StringVar(value='0.00')
+        self._target_z_text = tk.StringVar(value='0.00')
+        self._target_yaw_text = tk.StringVar(value='0.0')
+        self._have_odom = False
+        self._current_x = 0.0
+        self._current_y = 0.0
+        self._current_z = 0.0
+        self._current_roll = 0.0
+        self._current_pitch = 0.0
+        self._current_yaw = 0.0
+        self._current_yaw_deg = 0.0
+        self._target_x = 0.0
+        self._target_y = 0.0
+        self._target_z = 0.0
+        self._target_yaw = 0.0
 
         self._setup_styles()
         self._build_ui()
+        self._set_mode_ui('manual_attitude')
         self._window.bind('<space>', lambda _event: self._toggle_deadman())
-        self._window.bind('m', lambda _event: self._request_mode_toggle())
-        self._window.bind('r', lambda _event: self._request_mode_reset())
+        self._window.bind('m', lambda _event: self._toggle_mode())
+        self._window.bind('r', lambda _event: self._reset_target_to_current())
         self._window.bind('0', lambda _event: self._reset())
 
     def _setup_styles(self) -> None:
@@ -91,19 +123,19 @@ class JoyGuiPublisher(Node):
         ttk.Label(container, text='Drone Control', style='Title.TLabel').pack(anchor='w')
         ttk.Label(
             container,
-            text='Space toggles deadman, M toggles mode, R recenters target, 0 resets axes.',
+            text='Space toggles deadman, M toggles mode, R loads the current pose into the hold target, 0 resets axes.',
             style='Subtitle.TLabel',
         ).pack(anchor='w', pady=(4, 12))
 
         top_row = ttk.Frame(container, style='Root.TFrame')
         top_row.pack(fill='x', pady=(0, 10))
         self._build_mode_card(top_row)
-        self._build_live_card(top_row)
+        self._build_telemetry_card(top_row)
 
         bottom_row = ttk.Frame(container, style='Root.TFrame')
         bottom_row.pack(fill='both', expand=True)
-        self._build_axes_card(bottom_row)
         self._build_target_card(bottom_row)
+        self._build_axes_card(bottom_row)
 
         footer = ttk.Frame(container, style='Root.TFrame')
         footer.pack(fill='x', pady=(10, 0))
@@ -118,33 +150,67 @@ class JoyGuiPublisher(Node):
 
         row = ttk.Frame(card, style='Card.TFrame')
         row.pack(fill='x')
-        ttk.Button(row, text='Manual', style='Accent.TButton', command=lambda: self._set_control_mode(0, 'manual_attitude')).pack(side='left', padx=(0, 6))
-        ttk.Button(row, text='Hold', style='Accent.TButton', command=lambda: self._set_control_mode(1, 'position_hold')).pack(side='left')
-
-        row2 = ttk.Frame(card, style='Card.TFrame')
-        row2.pack(fill='x', pady=(8, 0))
-        ttk.Button(row2, text='Toggle (M)', style='Small.TButton', command=self._request_mode_toggle).pack(side='left', padx=(0, 6))
-        ttk.Button(row2, text='Reset (R)', style='Small.TButton', command=self._request_mode_reset).pack(side='left')
+        self._manual_mode_button = ttk.Button(
+            row,
+            text='Manual',
+            style='Accent.TButton',
+            command=lambda: self._set_control_mode(0, 'manual_attitude'),
+        )
+        self._manual_mode_button.pack(side='left', padx=(0, 6))
+        self._position_mode_button = ttk.Button(
+            row,
+            text='Position Hold',
+            style='Accent.TButton',
+            command=lambda: self._set_control_mode(1, 'position_hold'),
+        )
+        self._position_mode_button.pack(side='left')
 
         ttk.Label(card, textvariable=self._service_state, style='CardText.TLabel', wraplength=260, justify='left').pack(anchor='w', pady=(8, 0))
 
-    def _build_live_card(self, parent: ttk.Frame) -> None:
+    def _build_telemetry_card(self, parent: ttk.Frame) -> None:
         card = ttk.Frame(parent, style='Card.TFrame', padding=12)
         card.pack(side='left', fill='both', expand=True, padx=(6, 0))
 
-        ttk.Label(card, text='Live', style='CardTitle.TLabel').pack(anchor='w')
+        ttk.Label(card, text='Telemetry', style='CardTitle.TLabel').pack(anchor='w')
         box = ttk.Frame(card, style='Card.TFrame')
         box.pack(fill='x', pady=(6, 0))
-        ttk.Label(box, text='Deadman', style='CardText.TLabel').grid(row=0, column=0, sticky='w')
-        ttk.Label(box, textvariable=self._deadman_state, style='Value.TLabel').grid(row=0, column=1, sticky='e')
-        ttk.Label(box, text='Mode button', style='CardText.TLabel').grid(row=1, column=0, sticky='w')
-        ttk.Label(box, text=str(self._mode_toggle_button), style='Value.TLabel').grid(row=1, column=1, sticky='e')
-        ttk.Label(box, text='Reset button', style='CardText.TLabel').grid(row=2, column=0, sticky='w')
-        ttk.Label(box, text=str(self._mode_reset_button), style='Value.TLabel').grid(row=2, column=1, sticky='e')
+        ttk.Label(box, textvariable=self._pose_state, style='CardText.TLabel', wraplength=260, justify='left').pack(anchor='w', pady=(0, 4))
+        ttk.Label(box, textvariable=self._orientation_state, style='CardText.TLabel', wraplength=260, justify='left').pack(anchor='w', pady=(0, 4))
+        ttk.Label(box, textvariable=self._target_state, style='CardText.TLabel', wraplength=260, justify='left').pack(anchor='w')
+
+    def _build_target_card(self, parent: ttk.Frame) -> None:
+        card = ttk.Frame(parent, style='Card.TFrame', padding=12)
+        card.pack(side='left', fill='both', expand=True, padx=(0, 6))
+
+        ttk.Label(card, text='Position Hold Target', style='CardTitle.TLabel').pack(anchor='w')
+        ttk.Label(
+            card,
+            text='Edit the target and press Apply. The controller will use the current pose target while in position hold.',
+            style='CardText.TLabel',
+            wraplength=260,
+            justify='left',
+        ).pack(anchor='w', pady=(2, 8))
+        ttk.Label(card, textvariable=self._target_note, style='CardText.TLabel', wraplength=260, justify='left').pack(anchor='w', pady=(0, 8))
+
+        grid = ttk.Frame(card, style='Card.TFrame')
+        grid.pack(fill='x')
+        self._target_entry_widgets: list[ttk.Entry] = [
+            self._add_target_entry(grid, 0, 'X', self._target_x_text),
+            self._add_target_entry(grid, 1, 'Y', self._target_y_text),
+            self._add_target_entry(grid, 2, 'Z', self._target_z_text),
+            self._add_target_entry(grid, 3, 'Yaw', self._target_yaw_text),
+        ]
+
+        row = ttk.Frame(card, style='Card.TFrame')
+        row.pack(fill='x', pady=(8, 0))
+        self._apply_target_button = ttk.Button(row, text='Apply Target', style='Accent.TButton', command=self._apply_target_from_fields)
+        self._apply_target_button.pack(side='left', padx=(0, 6))
+        self._load_current_button = ttk.Button(row, text='Load Current', style='Small.TButton', command=self._reset_target_to_current)
+        self._load_current_button.pack(side='left')
 
     def _build_axes_card(self, parent: ttk.Frame) -> None:
         card = ttk.Frame(parent, style='Card.TFrame', padding=12)
-        card.pack(side='left', fill='both', expand=True, padx=(0, 6))
+        card.pack(fill='both', expand=True)
 
         ttk.Label(card, text='Axes', style='CardTitle.TLabel').pack(anchor='w')
         self._add_axis_slider(card, 'Roll', self._roll)
@@ -155,36 +221,7 @@ class JoyGuiPublisher(Node):
         row = ttk.Frame(card, style='Card.TFrame')
         row.pack(fill='x', pady=(8, 0))
         ttk.Checkbutton(row, text='Deadman', variable=self._deadman).pack(side='left')
-        ttk.Button(row, text='Zero', style='Small.TButton', command=self._reset).pack(side='right')
-
-    def _build_target_card(self, parent: ttk.Frame) -> None:
-        card = ttk.Frame(parent, style='Card.TFrame', padding=12)
-        card.pack(side='left', fill='both', expand=True, padx=(6, 0))
-
-        ttk.Label(card, text='Target', style='CardTitle.TLabel').pack(anchor='w')
-        grid = ttk.Frame(card, style='Card.TFrame')
-        grid.pack(fill='x', pady=(4, 0))
-        self._add_target_entry(grid, 0, 'X', self._target_x)
-        self._add_target_entry(grid, 1, 'Y', self._target_y)
-        self._add_target_entry(grid, 2, 'Z', self._target_z)
-        self._add_target_entry(grid, 3, 'Yaw', self._target_yaw_deg)
-
-        row = ttk.Frame(card, style='Card.TFrame')
-        row.pack(fill='x', pady=(8, 0))
-        ttk.Button(row, text='Apply', style='Accent.TButton', command=self._apply_position_target).pack(side='left', padx=(0, 6))
-        ttk.Button(row, text='Use current', style='Small.TButton', command=self._request_mode_reset).pack(side='left', padx=(0, 6))
-        ttk.Button(row, text='Hold', style='Small.TButton', command=lambda: self._set_control_mode(1, 'position_hold')).pack(side='left')
-
-        nudge = ttk.Frame(card, style='Card.TFrame')
-        nudge.pack(fill='x', pady=(8, 0))
-        ttk.Button(nudge, text='+XY', style='Small.TButton', command=lambda: self._nudge_target(self._target_step_xy_m, 0.0, 0.0, 0.0)).pack(side='left', padx=(0, 4))
-        ttk.Button(nudge, text='-XY', style='Small.TButton', command=lambda: self._nudge_target(-self._target_step_xy_m, 0.0, 0.0, 0.0)).pack(side='left', padx=(0, 4))
-        ttk.Button(nudge, text='+Z', style='Small.TButton', command=lambda: self._nudge_target(0.0, 0.0, self._target_step_z_m, 0.0)).pack(side='left', padx=(0, 4))
-        ttk.Button(nudge, text='-Z', style='Small.TButton', command=lambda: self._nudge_target(0.0, 0.0, -self._target_step_z_m, 0.0)).pack(side='left', padx=(0, 4))
-        ttk.Button(nudge, text='+Yaw', style='Small.TButton', command=lambda: self._nudge_target(0.0, 0.0, 0.0, self._target_step_yaw_deg)).pack(side='left', padx=(0, 4))
-        ttk.Button(nudge, text='-Yaw', style='Small.TButton', command=lambda: self._nudge_target(0.0, 0.0, 0.0, -self._target_step_yaw_deg)).pack(side='left')
-
-        ttk.Label(card, textvariable=self._target_state, style='Mode.TLabel').pack(anchor='w', pady=(8, 0))
+        ttk.Label(row, text='0 resets axes', style='CardText.TLabel').pack(side='right')
 
     def _add_axis_slider(self, parent: ttk.Frame, label: str, variable: tk.DoubleVar) -> None:
         frame = ttk.Frame(parent, style='Card.TFrame')
@@ -201,9 +238,18 @@ class JoyGuiPublisher(Node):
         variable.trace_add('write', sync_value)
         sync_value()
 
-    def _add_target_entry(self, parent: ttk.Frame, row: int, label: str, variable: tk.StringVar) -> None:
+    def _add_target_entry(self, parent: ttk.Frame, row: int, label: str, variable: tk.StringVar) -> ttk.Entry:
         ttk.Label(parent, text=label, style='CardText.TLabel').grid(row=row, column=0, sticky='w', pady=2)
-        ttk.Entry(parent, textvariable=variable, width=10).grid(row=row, column=1, sticky='w', padx=(6, 0), pady=2)
+        entry = ttk.Entry(parent, textvariable=variable, width=10)
+        entry.grid(row=row, column=1, sticky='w', padx=(6, 0), pady=2)
+        return entry
+
+    def _read_float_var(self, variable: tk.StringVar, label: str) -> Optional[float]:
+        try:
+            return float(variable.get())
+        except ValueError:
+            self._set_feedback(f'Invalid {label} value', f'Invalid target input for {label}.')
+            return None
 
     def _build_message(self) -> Joy:
         message = Joy()
@@ -214,18 +260,12 @@ class JoyGuiPublisher(Node):
             float(self._throttle.get()),
         ]
         buttons = [0, 0, 0, 0, int(self._deadman.get()), 0, 0, 0]
-        if self._pulse_mode_toggle:
-            buttons[self._mode_toggle_button] = 1
-        if self._pulse_mode_reset:
-            buttons[self._mode_reset_button] = 1
         message.buttons = buttons
         return message
 
     def _publish(self) -> None:
         message = self._build_message()
         self._publisher.publish(message)
-        self._pulse_mode_toggle = False
-        self._pulse_mode_reset = False
         self._deadman_state.set('ON' if self._deadman.get() else 'OFF')
         self._status.set('Publishing roll={:.2f} pitch={:.2f} yaw={:.2f} throttle={:.2f}'.format(
             message.axes[0], message.axes[1], message.axes[2], message.axes[3]
@@ -243,15 +283,10 @@ class JoyGuiPublisher(Node):
         self._deadman.set(0 if self._deadman.get() else 1)
         self._publish()
 
-    def _request_mode_toggle(self) -> None:
-        self._pulse_mode_toggle = True
-        self._mode_label.set('toggle queued')
-        self._publish()
-
-    def _request_mode_reset(self) -> None:
-        self._pulse_mode_reset = True
-        self._mode_label.set('reset queued')
-        self._publish()
+    def _toggle_mode(self) -> None:
+        target_mode = 1 if self._mode_value == 0 else 0
+        target_name = 'position_hold' if target_mode == 1 else 'manual_attitude'
+        self._set_control_mode(target_mode, target_name)
 
     def _set_feedback(self, service_text: str, status_text: Optional[str] = None, mode_text: Optional[str] = None) -> None:
         self._service_state.set(service_text)
@@ -259,6 +294,25 @@ class JoyGuiPublisher(Node):
             self._status.set(status_text)
         if mode_text is not None:
             self._mode_label.set(mode_text)
+
+    def _set_mode_ui(self, mode_name: str) -> None:
+        normalized_mode = (mode_name or 'manual_attitude').strip().lower()
+        is_position_hold = normalized_mode == 'position_hold'
+        self._mode_value = 1 if is_position_hold else 0
+        self._mode_label.set(normalized_mode)
+
+        self._manual_mode_button.state(['disabled'] if self._mode_value == 0 else ['!disabled'])
+        self._position_mode_button.state(['disabled'] if self._mode_value == 1 else ['!disabled'])
+
+        target_state = ['!disabled'] if is_position_hold else ['disabled']
+        self._apply_target_button.state(target_state)
+        self._load_current_button.state(target_state)
+        self._target_note.set(
+            'Target editing is enabled in position hold mode.' if is_position_hold
+            else 'Switch to position hold to apply or load a target.'
+        )
+        for widget in self._target_entry_widgets:
+            widget.state(target_state)
 
     def _set_control_mode(self, mode: int, mode_name: str) -> None:
         service_type = self._load_service_type('SetControlMode')
@@ -283,13 +337,39 @@ class JoyGuiPublisher(Node):
                 self._window.after(0, lambda: self._set_feedback(str(exc), 'Control mode request failed.'))
                 return
 
-            self._window.after(0, lambda: self._set_feedback(
-                response.message or f'Control mode set to {mode_name}',
-                f'Control mode: {mode_name}',
-                mode_name,
-            ))
+            def apply_response() -> None:
+                self._mode_value = mode
+                self._set_feedback(
+                    response.message or f'Control mode set to {mode_name}',
+                    f'Control mode: {mode_name}',
+                    mode_name,
+                )
+                self._set_mode_ui(mode_name)
+
+            self._window.after(0, apply_response)
 
         future.add_done_callback(on_done)
+
+    def _reset_target_to_current(self) -> None:
+        if not self._have_odom:
+            self._set_feedback('odometry unavailable', 'Cannot reset target before odometry is available.')
+            return
+
+        self._target_x_text.set(f'{self._current_x:.2f}')
+        self._target_y_text.set(f'{self._current_y:.2f}')
+        self._target_z_text.set(f'{self._current_z:.2f}')
+        self._target_yaw_text.set(f'{self._current_yaw_deg:.1f}')
+        self._set_position_target(self._current_x, self._current_y, self._current_z, self._current_yaw_deg)
+
+    def _apply_target_from_fields(self) -> None:
+        x = self._read_float_var(self._target_x_text, 'X')
+        y = self._read_float_var(self._target_y_text, 'Y')
+        z = self._read_float_var(self._target_z_text, 'Z')
+        yaw_deg = self._read_float_var(self._target_yaw_text, 'Yaw')
+        if x is None or y is None or z is None or yaw_deg is None:
+            return
+
+        self._set_position_target(x, y, z, yaw_deg)
 
     def _set_position_target(self, x: float, y: float, z: float, yaw_deg: float) -> None:
         service_type = self._load_service_type('SetPositionTarget')
@@ -328,12 +408,76 @@ class JoyGuiPublisher(Node):
 
         future.add_done_callback(on_done)
 
-    def _read_float_var(self, variable: tk.StringVar, label: str) -> Optional[float]:
-        try:
-            return float(variable.get())
-        except ValueError:
-            self._set_feedback(f'Invalid {label} value', f'Invalid target input for {label}.')
-            return None
+    def _odom_callback(self, msg: Odometry) -> None:
+        position = msg.pose.pose.position
+        orientation = msg.pose.pose.orientation
+        roll, pitch, yaw = self._quaternion_to_euler(
+            orientation.x,
+            orientation.y,
+            orientation.z,
+            orientation.w,
+        )
+
+        self._have_odom = True
+        self._current_x = position.x
+        self._current_y = position.y
+        self._current_z = position.z
+        self._current_roll = roll
+        self._current_pitch = pitch
+        self._current_yaw = yaw
+        self._current_yaw_deg = math.degrees(yaw)
+        self._pose_state.set(f'Position: x={position.x:.2f} y={position.y:.2f} z={position.z:.2f}')
+        self._orientation_state.set(
+            'Orientation: roll={:.1f}° pitch={:.1f}° yaw={:.1f}°'.format(
+                math.degrees(roll),
+                math.degrees(pitch),
+                math.degrees(yaw),
+            )
+        )
+
+    def _target_callback(self, msg: Odometry) -> None:
+        position = msg.pose.pose.position
+        orientation = msg.pose.pose.orientation
+        _, _, yaw = self._quaternion_to_euler(
+            orientation.x,
+            orientation.y,
+            orientation.z,
+            orientation.w,
+        )
+
+        self._target_x = position.x
+        self._target_y = position.y
+        self._target_z = position.z
+        self._target_yaw = yaw
+        self._target_state.set(
+            'Target: x={:.2f} y={:.2f} z={:.2f} yaw={:.1f}°'.format(
+                position.x,
+                position.y,
+                position.z,
+                math.degrees(yaw),
+            )
+        )
+
+    def _control_mode_callback(self, msg: String) -> None:
+        mode_name = (msg.data or 'manual_attitude').strip().lower()
+        self._window.after(0, lambda: self._set_mode_ui(mode_name))
+
+    @staticmethod
+    def _quaternion_to_euler(x: float, y: float, z: float, w: float) -> tuple[float, float, float]:
+        sinr_cosp = 2.0 * (w * x + y * z)
+        cosr_cosp = 1.0 - 2.0 * (x * x + y * y)
+        roll = math.atan2(sinr_cosp, cosr_cosp)
+
+        sinp = 2.0 * (w * y - z * x)
+        if abs(sinp) >= 1.0:
+            pitch = math.copysign(math.pi / 2.0, sinp)
+        else:
+            pitch = math.asin(sinp)
+
+        siny_cosp = 2.0 * (w * z + x * y)
+        cosy_cosp = 1.0 - 2.0 * (y * y + z * z)
+        yaw = math.atan2(siny_cosp, cosy_cosp)
+        return roll, pitch, yaw
 
     def _load_service_type(self, symbol: str):
         try:
@@ -351,33 +495,6 @@ class JoyGuiPublisher(Node):
         if self._position_target_client is None:
             self._position_target_client = self.create_client(service_type, self._position_target_service)
         return self._position_target_client
-
-    def _apply_position_target(self) -> None:
-        x = self._read_float_var(self._target_x, 'X')
-        y = self._read_float_var(self._target_y, 'Y')
-        z = self._read_float_var(self._target_z, 'Z')
-        yaw_deg = self._read_float_var(self._target_yaw_deg, 'Yaw')
-        if x is None or y is None or z is None or yaw_deg is None:
-            return
-        self._set_position_target(x, y, z, yaw_deg)
-
-    def _nudge_target(self, dx: float, dy: float, dz: float, dyaw_deg: float) -> None:
-        x = self._read_float_var(self._target_x, 'X')
-        y = self._read_float_var(self._target_y, 'Y')
-        z = self._read_float_var(self._target_z, 'Z')
-        yaw_deg = self._read_float_var(self._target_yaw_deg, 'Yaw')
-        if x is None or y is None or z is None or yaw_deg is None:
-            return
-
-        x += dx
-        y += dy
-        z += dz
-        yaw_deg += dyaw_deg
-        self._target_x.set(f'{x:.2f}')
-        self._target_y.set(f'{y:.2f}')
-        self._target_z.set(f'{z:.2f}')
-        self._target_yaw_deg.set(f'{yaw_deg:.1f}')
-        self._set_position_target(x, y, z, yaw_deg)
 
     def _on_close(self) -> None:
         self._deadman.set(0)
