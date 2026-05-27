@@ -2,7 +2,7 @@
 <CycloneDDS>
     <Domain id="any">
         <SharedMemory>
-            <Enable>true</Enable>
+            <Enable>false</Enable>
             <LogLevel>info</LogLevel>
         </SharedMemory>
 

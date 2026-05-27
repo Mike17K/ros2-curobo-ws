@@ -20,6 +20,10 @@ ros2 run image_proc image_proc --ros-args \
 
 and
 
+change the `docker/ORB-SLAM3-ROS2-Docker/orb_slam3_ros2_wrapper/params/ros_params/gazebo-rgbd-imu-ros-params.yaml`
+
+ros2 launch ros2 launch orb_slam3_ros2_wrapper rgbd_imu.launch.py
+
 ros2 launch orb_slam3_ros2_wrapper mono.launch.py
 
 ros2 launch orb_slam3_ros2_wrapper mono_imu.launch.py

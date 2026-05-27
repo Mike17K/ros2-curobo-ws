@@ -1,72 +1,72 @@
 services:
-  iceoryx_roudi:
-    image: curobo-ros2-dev-custom
-    container_name: iceoryx_roudi
-    command: iox-roudi -c /roudi_config.toml
-    network_mode: host
-    ipc: host
-    privileged: true
-    cap_add:
-      - IPC_LOCK
-    environment:
-      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-      - CYCLONEDDS_URI=file:///cyclonedds.xml
-      - ROS_DOMAIN_ID=55
-    volumes:
-      - /dev/shm:/dev/shm
-      - ./config/cyclonedds.xml:/cyclonedds.xml:ro
-      - ./docker/iceoryx/config/iox_config.toml:/roudi_config.toml:ro
-    restart: always
+  # iceoryx_roudi:
+  #   image: curobo-ros2-dev-custom
+  #   container_name: iceoryx_roudi
+  #   command: iox-roudi -c /roudi_config.toml
+  #   network_mode: host
+  #   ipc: host
+  #   privileged: true
+  #   cap_add:
+  #     - IPC_LOCK
+  #   environment:
+  #     - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+  #     - CYCLONEDDS_URI=file:///cyclonedds.xml
+  #     - ROS_DOMAIN_ID=55
+  #   volumes:
+  #     - /dev/shm:/dev/shm
+  #     - ./config/cyclonedds.xml:/cyclonedds.xml:ro
+  #     - ./docker/iceoryx/config/iox_config.toml:/roudi_config.toml:ro
+  #   restart: always
       
-  depth_anything_ros2_dev:
-    build:
-      context: docker/vision
-      dockerfile: Dockerfile
-    container_name: depth_anything_ros2_dev
-    image: curobo-ros2-dev-custom
-    privileged: true
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
-      nofile:
-        soft: 65536
-        hard: 65536
-    network_mode: host
-    environment:
-      - DISPLAY=${DISPLAY}
-      - NVIDIA_DRIVER_CAPABILITIES=all
-      - ROS_DISTRO=humble
-      - BASH_ENV=/opt/ros/humble/setup.bash
-      - XAUTHORITY=/tmp/.docker.xauth
-      # ΠΡΟΣΘΗΚΗ ΤΩΝ ΠΑΡΑΚΑΤΩ
-      # - FASTRTPS_DEFAULT_PROFILES_FILE=/fastrtps_enp34s0.xml
-      - CYCLONEDDS_URI=file:///cyclonedds.xml
-      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp # TODO test the rmw_fastrtps_cpp
-      - ROS_DOMAIN_ID=55
-      - ROS_LOCALHOST_ONLY=0
-    volumes:
-      - /tmp/.X11-unix:/tmp/.X11-unix:rw
-      - ~/.Xauthority:/root/.Xauthority:rw # Προσθήκη
-      - /tmp/.docker.xauth:/tmp/.docker.xauth:rw
-      - /tmp:/tmp:rw
-      - ./docker/vision:/workspace:rw
-      - ./src/shared_msgs:/workspace/src/shared_msgs:rw # Προσθήκη αυτού
-      - /dev:/dev:rw
-      - /dev/shm:/dev/shm 
-      - ./config/cyclonedds.xml:/cyclonedds.xml:ro
-      # - ./config/fastrtps_enp34s0.xml:/fastrtps_enp34s0.xml:ro
-    ipc: host
-    working_dir: /workspace
-    stdin_open: true # αντιστοιχεί στο -i
-    tty: true # αντιστοιχεί στο -t
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
+  # depth_anything_ros2_dev:
+  #   build:
+  #     context: docker/vision
+  #     dockerfile: Dockerfile
+  #   container_name: depth_anything_ros2_dev
+  #   image: curobo-ros2-dev-custom
+  #   privileged: true
+  #   ulimits:
+  #     memlock:
+  #       soft: -1
+  #       hard: -1
+  #     nofile:
+  #       soft: 65536
+  #       hard: 65536
+  #   network_mode: host
+  #   environment:
+  #     - DISPLAY=${DISPLAY}
+  #     - NVIDIA_DRIVER_CAPABILITIES=all
+  #     - ROS_DISTRO=humble
+  #     - BASH_ENV=/opt/ros/humble/setup.bash
+  #     - XAUTHORITY=/tmp/.docker.xauth
+  #     # ΠΡΟΣΘΗΚΗ ΤΩΝ ΠΑΡΑΚΑΤΩ
+  #     # - FASTRTPS_DEFAULT_PROFILES_FILE=/fastrtps_enp34s0.xml
+  #     - CYCLONEDDS_URI=file:///cyclonedds.xml
+  #     - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp # TODO test the rmw_fastrtps_cpp
+  #     - ROS_DOMAIN_ID=55
+  #     - ROS_LOCALHOST_ONLY=0
+  #   volumes:
+  #     - /tmp/.X11-unix:/tmp/.X11-unix:rw
+  #     - ~/.Xauthority:/root/.Xauthority:rw # Προσθήκη
+  #     - /tmp/.docker.xauth:/tmp/.docker.xauth:rw
+  #     - /tmp:/tmp:rw
+  #     - ./docker/vision:/workspace:rw
+  #     - ./src/shared_msgs:/workspace/src/shared_msgs:rw # Προσθήκη αυτού
+  #     - /dev:/dev:rw
+  #     - /dev/shm:/dev/shm 
+  #     - ./config/cyclonedds.xml:/cyclonedds.xml:ro
+  #     # - ./config/fastrtps_enp34s0.xml:/fastrtps_enp34s0.xml:ro
+  #   ipc: host
+  #   working_dir: /workspace
+  #   stdin_open: true # αντιστοιχεί στο -i
+  #   tty: true # αντιστοιχεί στο -t
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - driver: nvidia
+  #             count: all
+  #             capabilities: [gpu]
     # depends_on:
     #   iceoryx_roudi:
     #     condition: service_started
@@ -100,27 +100,27 @@ services:
 
 
 # docker run -it --rm -v /dev:/dev -v /dev/shm:/dev/shm --privileged --net=host microros/micro-ros-agent:$ROS_DISTRO udp4 --port 8888 -v6
-  microros_agent:
-    build: 
-      context: docker/microros_agent
-      dockerfile: Dockerfile
-    container_name: microros_agent
-    command: udp4 --port 8888 -v4
-    network_mode: host
-    ipc: host
-    privileged: true
-    ulimits:
-      memlock: -1
-      rtprio: 99
-    cap_add:
-      - IPC_LOCK
-    environment:
-      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-      - CYCLONEDDS_URI=file:///cyclonedds.xml
-      - ROS_DOMAIN_ID=55
-    volumes:
-      - /dev:/dev:rw
-      - /dev/shm:/dev/shm:rw
-      - ./config/cyclonedds.xml:/cyclonedds.xml:ro
-      - ./config/cyclonedds.xml:/root/.ros/cyclonedds.xml:ro
+  # microros_agent:
+  #   build: 
+  #     context: docker/microros_agent
+  #     dockerfile: Dockerfile
+  #   container_name: microros_agent
+  #   command: udp4 --port 8888 -v4
+  #   network_mode: host
+  #   ipc: host
+  #   privileged: true
+  #   ulimits:
+  #     memlock: -1
+  #     rtprio: 99
+  #   cap_add:
+  #     - IPC_LOCK
+  #   environment:
+  #     - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+  #     - CYCLONEDDS_URI=file:///cyclonedds.xml
+  #     - ROS_DOMAIN_ID=55
+  #   volumes:
+  #     - /dev:/dev:rw
+  #     - /dev/shm:/dev/shm:rw
+  #     - ./config/cyclonedds.xml:/cyclonedds.xml:ro
+  #     - ./config/cyclonedds.xml:/root/.ros/cyclonedds.xml:ro
 
